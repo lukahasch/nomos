@@ -1,3 +1,4 @@
+use chumsky::Parser;
 use std::time::SystemTime;
 
 fn setup_logger() -> Result<(), fern::InitError> {
@@ -11,7 +12,7 @@ fn setup_logger() -> Result<(), fern::InitError> {
                 message
             ))
         })
-        .level(log::LevelFilter::Off)
+        .level(log::LevelFilter::Debug)
         .chain(std::io::stdout())
         .chain(fern::log_file("output.log")?)
         .apply()?;
@@ -19,29 +20,5 @@ fn setup_logger() -> Result<(), fern::InitError> {
 }
 
 fn main() {
-    /*let file = "test.stream";
-    let mut buf = Vec::new();
-    File::open(file).unwrap().read_to_end(&mut buf).unwrap();
-    let input = String::from_utf8(buf).unwrap();
-    match Context::new(file, &input).lex() {
-        Ok(lexed) => {
-            match parse(lexed) {
-                Ok(ast) => {
-                    println!("{:?}", ast);
-                }
-                Err(errs) => {
-                    for err in errs {
-                        let cache = err.cache();
-                        err.report().print(cache).unwrap();
-                    }
-                }
-            };
-        }
-        Err(errs) => {
-            for err in errs {
-                let cache = err.cache();
-                err.report().print(cache).unwrap();
-            }
-        }
-    }*/
+    setup_logger().expect("Failed to initialize Logger");
 }
