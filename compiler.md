@@ -1,4 +1,8 @@
-Graph based compiler
-We create a giant graph with all the dependencies
-and then we query it
-and we apply equality saturation
+Context
+
+
+Data<A>
+  .query<B>(C)
+  .map<B>(|x| x as i8)
+  .query<i8>()
+B: Derive<A, (C)>
