@@ -8,14 +8,14 @@ use std::{
 };
 use thiserror::Error;
 
-use crate::parser::{ParseContext, lexer::Token};
+use crate::parser::{lexer::Token, lib::ParseContext};
 
 #[derive(Debug, Error, Clone, PartialEq, Default)]
 pub enum Error {
     #[default]
     #[error("{}", rainbow(r"¯\_(ツ)_/¯"))]
     Shrug,
-    #[error("Expected {expected} found {found}")]
+    #[error("Expected {} found {}", expected.to_string().green(), found.to_string().red())]
     ExpectedFound {
         expected: Expected,
         found: Found,
@@ -106,6 +106,14 @@ pub enum Expected {
     Eof,
     #[error("pattern")]
     Pattern,
+    #[error("'|'")]
+    Pipe,
+    #[error("'def'")]
+    Def,
+    #[error("';'")]
+    Semicolon,
+    #[error("'+'")]
+    Plus,
 }
 
 impl<'a> From<&'a Token> for Expected {
@@ -134,6 +142,10 @@ impl<'a> From<&'a Token> for Expected {
             Token::At => Expected::At,
             Token::Equals => Expected::Equals,
             Token::Identifier(_) => Expected::Identifier,
+            Token::Pipe => Expected::Pipe,
+            Token::Def => Expected::Def,
+            Token::Semicolon => Expected::Semicolon,
+            Token::Plus => Expected::Plus,
         }
     }
 }
@@ -237,7 +249,6 @@ impl Error {
                         .with_color(Color::Red),
                 )
                 .finish(),
-            _ => todo!(),
         }
     }
 }

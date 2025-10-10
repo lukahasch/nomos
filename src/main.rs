@@ -1,3 +1,15 @@
+#![feature(
+    type_alias_impl_trait,
+    const_ops,
+    unboxed_closures,
+    try_blocks,
+    try_trait_v2,
+    never_type,
+    min_specialization,
+    macro_metavar_expr,
+    if_let_guard
+)]
+
 use std::time::SystemTime;
 
 use nomos::{Context, parser::parse};
@@ -28,13 +40,19 @@ fn main() {
         sources: Default::default(),
     };
     let source = "<< test >>";
-    let contents = "fn(n) -> if [!] then n else \n!";
+    let contents = "def [add, [1, 1]] = 2 in 1 + 1";
 
     ctx.intern_source(source, contents);
 
     match parse(&mut ctx, source) {
         Ok(ast) => {
-            dbg!(ast);
+            if ast.contains_error() {
+                for e in ast.item.collect_errors() {
+                    e.report().print(&mut ctx).unwrap();
+                }
+            } else {
+                println!("{}", ast.s_expr());
+            }
         }
         Err(e) => {
             e.report().print(ctx).unwrap();

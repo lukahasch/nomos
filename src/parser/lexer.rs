@@ -52,8 +52,16 @@ pub enum Token {
     At,
     #[token("=")]
     Equals,
+    #[token("|")]
+    Pipe,
+    #[token("def")]
+    Def,
     #[regex(r"([a-zA-Z][a-zA-Z0-9_]*)|(_[a-zA-Z0-9_]+)|([a-zA-Z])", |lex| lex.slice().to_string())]
     Identifier(String),
+    #[token(";")]
+    Semicolon,
+    #[token("+")]
+    Plus,
 }
 
 fn lex_integer(lex: &Lexer<Token>) -> Result<i64, Error> {
@@ -98,6 +106,10 @@ impl Display for Token {
             Token::At => write!(f, "'@'"),
             Token::Equals => write!(f, "'='"),
             Token::Identifier(name) => write!(f, "{}", name),
+            Token::Pipe => write!(f, "'|'"),
+            Token::Def => write!(f, "'def'"),
+            Token::Semicolon => write!(f, "';'"),
+            Token::Plus => write!(f, "'+'"),
         }
     }
 }
