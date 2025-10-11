@@ -80,7 +80,6 @@ pub enum Pattern<T: Types> {
     Wildcard,
     Capture(T::Identifier),
     Rest,
-    Tuple(Vec<T::Pattern>),
     List(Vec<T::Pattern>),
     As {
         pattern: T::Pattern,
@@ -336,10 +335,6 @@ impl Pattern<Parsed> {
             Pattern::Wildcard => "_".to_string(),
             Pattern::Capture(v) => format!("(Capture {})", v.item),
             Pattern::Rest => "...".to_string(),
-            Pattern::Tuple(a) => format!(
-                "(Tuple {})",
-                a.iter().map(|v| v.s_expr()).collect::<Vec<_>>().join(" ")
-            ),
             Pattern::List(a) => format!(
                 "(List {})",
                 a.iter().map(|v| v.s_expr()).collect::<Vec<_>>().join(" ")
@@ -360,7 +355,6 @@ impl Pattern<Parsed> {
             Pattern::If { pattern, condition } => {
                 pattern.contains_error() || condition.contains_error()
             }
-            Pattern::Tuple(a) => a.iter().any(|p| p.contains_error()),
             Pattern::List(a) => a.iter().any(|p| p.contains_error()),
             Pattern::Wildcard
             | Pattern::Capture(_)
@@ -378,7 +372,6 @@ impl Pattern<Parsed> {
                 pattern.collect_errors_into(errors);
                 condition.collect_errors_into(errors);
             }
-            Pattern::Tuple(a) => a.iter().for_each(|p| p.collect_errors_into(errors)),
             Pattern::List(a) => a.iter().for_each(|p| p.collect_errors_into(errors)),
             Pattern::Wildcard
             | Pattern::Capture(_)

@@ -33,7 +33,6 @@ pub fn atomic_pattern(px: &mut ParseContext) -> Output<Pattern<Parsed>> {
         integer_pattern,
         float_pattern,
         list_pattern,
-        tuple_pattern,
     ))
     .parse(px)
 }
@@ -43,14 +42,6 @@ pub fn list_pattern(px: &mut ParseContext) -> Output<Pattern<Parsed>> {
         .spanned()
         .delimited_sequence(Token::OpenBracket, Token::Comma, Token::CloseBracket)
         .map(|patterns| Pattern::List(patterns.into_iter().map(Box::new).collect()))
-        .parse(px)
-}
-
-pub fn tuple_pattern(px: &mut ParseContext) -> Output<Pattern<Parsed>> {
-    pattern
-        .spanned()
-        .delimited_sequence(Token::OpenParen, Token::Comma, Token::CloseParen)
-        .map(|patterns| Pattern::Tuple(patterns.into_iter().map(Box::new).collect()))
         .parse(px)
 }
 

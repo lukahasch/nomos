@@ -1,5 +1,4 @@
 use ariadne::*;
-use colored::Colorize;
 use logos::Lexer;
 use std::{
     cmp::Ordering,
@@ -7,32 +6,58 @@ use std::{
     ops::{Deref, DerefMut, Range},
 };
 use thiserror::Error;
+use yansi::Paint;
 
 use crate::parser::{lexer::Token, lib::ParseContext};
+
+pub const CORRECT: Color = Color::Green;
+pub const INFO: Color = Color::Yellow;
+pub const WARNING: Color = Color::Magenta;
+pub const ERROR: Color = Color::Red;
 
 #[derive(Debug, Error, Clone, PartialEq, Default)]
 pub enum Error {
     #[default]
     #[error("{}", rainbow(r"¯\_(ツ)_/¯"))]
     Shrug,
-    #[error("Expected {} found {}", expected.to_string().green(), found.to_string().red())]
+    #[error("Expected {} found {}", expected.to_string().paint(CORRECT), found.to_string().paint(ERROR))]
     ExpectedFound {
         expected: Expected,
         found: Found,
         span: Span,
     },
-    #[error("Expected one of {} found {}", expected.to_string().green(), found.to_string().red())]
+    #[error("Expected one of {} found {}", expected.to_string().paint(CORRECT), found.to_string().paint(ERROR))]
     ExpectedOneOf {
         expected: OneOf<Expected>,
         found: Found,
         span: Span,
     },
-    #[error("Unknown Character {}", format!("'{}'", .0).red())]
+    #[error("Unknown Character {}", format!("'{}'", .0).paint(ERROR))]
     UnknownCharacter(char, Span),
-    #[error("Invalid Integer {}", format!("'{}'", .0).red())]
+    #[error("Invalid Integer {}", format!("'{}'", .0).paint(ERROR))]
     InvalidInteger(String, Span),
-    #[error("Invalid Float {}", format!("'{}'", .0).red())]
+    #[error("Invalid Float {}", format!("'{}'", .0).paint(ERROR))]
     InvalidFloat(String, Span),
+    #[error("Found {}, expected {}", format!("{}", .found).paint(ERROR), .expected.to_string().paint(CORRECT))]
+    FoundExpected {
+        expected: Expected,
+        opened: Span,
+        opened_token: Token,
+        found: Token,
+        found_span: Span,
+    },
+    #[error("Unclosed {}", format!("{}", .0).paint(ERROR))]
+    Unclosed(Token, Span),
+    #[error("Mismatched closing delimiter, expected {} found {}", expected.to_string().paint(CORRECT), found.to_string().paint(ERROR))]
+    MismatchedClosing {
+        expected: Expected,
+        opened: Span,
+        opened_token: Token,
+        found: Token,
+        found_span: Span,
+        matched: Token,
+        matched_span: Span,
+    },
 }
 
 pub fn rainbow(str: &str) -> String {
@@ -189,6 +214,9 @@ impl Error {
             Error::UnknownCharacter(_, span) => Some(span),
             Error::InvalidInteger(_, span) => Some(span),
             Error::InvalidFloat(_, span) => Some(span),
+            Error::FoundExpected { found_span, .. } => Some(found_span),
+            Error::Unclosed(_, span) => Some(span),
+            Error::MismatchedClosing { found_span, .. } => Some(found_span),
         }
         .cloned()
     }
@@ -201,6 +229,20 @@ impl Error {
             Error::UnknownCharacter(_, span) => Some(vec![span.clone()]),
             Error::InvalidInteger(_, span) => Some(vec![span.clone()]),
             Error::InvalidFloat(_, span) => Some(vec![span.clone()]),
+            Error::FoundExpected {
+                opened, found_span, ..
+            } => Some(vec![opened.clone(), found_span.clone()]),
+            Error::Unclosed(_, span) => Some(vec![span.clone()]),
+            Error::MismatchedClosing {
+                opened,
+                found_span,
+                matched_span,
+                ..
+            } => Some(vec![
+                opened.clone(),
+                found_span.clone(),
+                matched_span.clone(),
+            ]),
         }
     }
 
@@ -214,7 +256,7 @@ impl Error {
                 .with_label(
                     Label::new(span.clone())
                         .with_message(self.to_string())
-                        .with_color(Color::Red),
+                        .with_color(ERROR),
                 )
                 .finish(),
             Self::ExpectedOneOf { span, .. } => Report::build(ReportKind::Error, span.clone())
@@ -222,7 +264,7 @@ impl Error {
                 .with_label(
                     Label::new(span.clone())
                         .with_message(self.to_string())
-                        .with_color(Color::Red),
+                        .with_color(ERROR),
                 )
                 .finish(),
             Self::UnknownCharacter(_, span) => Report::build(ReportKind::Error, span.clone())
@@ -230,7 +272,7 @@ impl Error {
                 .with_label(
                     Label::new(span.clone())
                         .with_message(self.to_string())
-                        .with_color(Color::Red),
+                        .with_color(ERROR),
                 )
                 .finish(),
             Self::InvalidInteger(_, span) => Report::build(ReportKind::Error, span.clone())
@@ -238,7 +280,7 @@ impl Error {
                 .with_label(
                     Label::new(span.clone())
                         .with_message(self.to_string())
-                        .with_color(Color::Red),
+                        .with_color(ERROR),
                 )
                 .finish(),
             Self::InvalidFloat(_, span) => Report::build(ReportKind::Error, span.clone())
@@ -246,7 +288,82 @@ impl Error {
                 .with_label(
                     Label::new(span.clone())
                         .with_message(self.to_string())
-                        .with_color(Color::Red),
+                        .with_color(ERROR),
+                )
+                .finish(),
+            Self::FoundExpected {
+                expected,
+                opened,
+                opened_token,
+                found,
+                found_span,
+            } => Report::build(ReportKind::Error, found_span.clone())
+                .with_message(self.to_string())
+                .with_label(
+                    Label::new(found_span.clone())
+                        .with_message(format!(
+                            "found {}, expected {}",
+                            found.to_string().paint(ERROR),
+                            expected.to_string().paint(CORRECT)
+                        ))
+                        .with_order(0)
+                        .with_color(ERROR),
+                )
+                .with_label(
+                    Label::new(opened.clone())
+                        .with_message(format!(
+                            "opened here with {}",
+                            opened_token.to_string().paint(INFO)
+                        ))
+                        .with_order(1)
+                        .with_color(INFO),
+                )
+                .finish(),
+            Self::Unclosed(_, span) => Report::build(ReportKind::Error, span.clone())
+                .with_message(self.to_string())
+                .with_label(
+                    Label::new(span.clone())
+                        .with_message(self.to_string())
+                        .with_color(ERROR),
+                )
+                .finish(),
+            Self::MismatchedClosing {
+                expected,
+                opened,
+                opened_token,
+                found,
+                found_span,
+                matched,
+                matched_span,
+            } => Report::build(ReportKind::Error, found_span.clone())
+                .with_message(self.to_string())
+                .with_label(
+                    Label::new(found_span.clone())
+                        .with_message(format!(
+                            "found {}, expected {}",
+                            found.to_string().paint(ERROR),
+                            expected.to_string().paint(CORRECT)
+                        ))
+                        .with_order(0)
+                        .with_color(ERROR),
+                )
+                .with_label(
+                    Label::new(opened.clone())
+                        .with_message(format!(
+                            "opened here with {}",
+                            opened_token.to_string().paint(INFO)
+                        ))
+                        .with_order(1)
+                        .with_color(INFO),
+                )
+                .with_label(
+                    Label::new(matched_span.clone())
+                        .with_message(format!(
+                            "but {} matches here",
+                            matched.to_string().paint(WARNING)
+                        ))
+                        .with_order(2)
+                        .with_color(WARNING),
                 )
                 .finish(),
         }

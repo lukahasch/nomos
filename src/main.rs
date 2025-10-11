@@ -40,7 +40,7 @@ fn main() {
         sources: Default::default(),
     };
     let source = "<< test >>";
-    let contents = "def [add, [1, 1]] = 2 in 1 + 1";
+    let contents = "1";
 
     ctx.intern_source(source, contents);
 

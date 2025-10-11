@@ -18,6 +18,7 @@ pub enum Output<T> {
 #[derive(Debug, Clone)]
 pub struct ParseContext<'a> {
     pub lexer: Lexer<'a, Token>,
+    /// (span, open, close)
     pub delimiters: Vec<(Span, Token, Token)>,
 }
 
@@ -122,7 +123,11 @@ pub trait Parser {
         Self: Sized,
     {
         move |px: &mut ParseContext<'_>| {
-            let start = px.span().start;
+            let start = {
+                let mut lex = px.lexer.clone();
+                lex.next();
+                lex.span().start
+            };
             let item = self.parse(px)?;
             let end = px.span().end;
             let span = Span::new(px.extras(), start..end);
@@ -216,7 +221,6 @@ pub trait Parser {
         let open_token = open.clone();
         let close_token = close.clone();
         let open = just(open).spanned();
-        let close = just(close).spanned();
         move |px: &mut ParseContext<'_>| {
             let Spanned {
                 span: open_span, ..
@@ -224,10 +228,46 @@ pub trait Parser {
             px.delimiters
                 .push((open_span, open_token.clone(), close_token.clone()));
             let item = self.parse(px)?;
-            let Spanned {
-                span: close_span, ..
-            } = close.parse(px)?;
-            px.delimiters.pop();
+            match px.lexer.next() {
+                None => {
+                    return Output::Fatal(Error::Unclosed(
+                        open_token.clone(),
+                        Span::new(px.extras(), px.span()),
+                    ));
+                }
+                Some(Ok(t)) if t == close_token => px.delimiters.pop(),
+                Some(Ok(t)) if px.delimiters.iter().any(|(_, _, c)| *c == t) => {
+                    let (m_opened, m_open_token, _) = px
+                        .delimiters
+                        .iter()
+                        .rev()
+                        .find(|(_, _, c)| *c == t)
+                        .unwrap()
+                        .clone();
+                    let (e_opened, e_open_token, e_close_token) = px.delimiters.pop().unwrap();
+                    let span = Span::new(px.extras(), px.span());
+                    return Output::Fatal(Error::MismatchedClosing {
+                        expected: Expected::from(&e_close_token),
+                        opened: e_opened,
+                        opened_token: e_open_token,
+                        found: t,
+                        found_span: span,
+                        matched: m_open_token,
+                        matched_span: m_opened,
+                    });
+                }
+                Some(Ok(t)) => {
+                    let expected = px.delimiters.pop().unwrap();
+                    return Output::Fatal(Error::FoundExpected {
+                        expected: Expected::from(&expected.2),
+                        opened: expected.0,
+                        opened_token: expected.1,
+                        found: t,
+                        found_span: Span::new(px.extras(), px.span()),
+                    });
+                }
+                Some(Err(e)) => return Output::Fatal(e),
+            };
             Output::Ok(item)
         }
     }

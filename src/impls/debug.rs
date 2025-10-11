@@ -70,7 +70,6 @@ impl Debug for Pattern<Parsed> {
             Pattern::Integer(i) => write!(f, "{}", i),
             Pattern::Float(fl) => write!(f, "{}", fl),
             Pattern::Rest => write!(f, "..."),
-            Pattern::Tuple(t) => f.debug_tuple("Tuple").field(t).finish(),
             Pattern::List(l) => f.debug_list().entries(l.iter()).finish(),
             Pattern::As { pattern, name } => f
                 .debug_struct("As")

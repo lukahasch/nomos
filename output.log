@@ -366,3 +366,146 @@
 [2025-10-09T19:30:11Z INFO nomos] Logger initialized
 [2025-10-09T19:30:16Z INFO nomos] Logger initialized
 [2025-10-09T19:30:23Z INFO nomos] Logger initialized
+[2025-10-10T11:50:14Z INFO nomos] Logger initialized
+[2025-10-10T12:25:42Z INFO nomos] Logger initialized
+[2025-10-10T12:25:49Z INFO nomos] Logger initialized
+[2025-10-10T19:32:18Z INFO nomos] Logger initialized
+[2025-10-10T19:40:10Z INFO nomos] Logger initialized
+[2025-10-10T19:40:16Z INFO nomos] Logger initialized
+[2025-10-10T19:40:21Z INFO nomos] Logger initialized
+[2025-10-10T19:40:26Z INFO nomos] Logger initialized
+[2025-10-10T19:43:55Z INFO nomos] Logger initialized
+[2025-10-10T19:44:44Z INFO nomos] Logger initialized
+[2025-10-10T19:44:52Z INFO nomos] Logger initialized
+[2025-10-10T19:47:30Z INFO nomos] Logger initialized
+[2025-10-10T19:47:34Z INFO nomos] Logger initialized
+[2025-10-10T19:57:01Z INFO nomos] Logger initialized
+[2025-10-10T19:57:07Z INFO nomos] Logger initialized
+[2025-10-10T19:57:25Z INFO nomos] Logger initialized
+[2025-10-10T19:58:40Z INFO nomos] Logger initialized
+[2025-10-10T20:01:01Z INFO nomos] Logger initialized
+[2025-10-10T20:02:08Z INFO nomos] Logger initialized
+[2025-10-10T20:02:54Z INFO nomos] Logger initialized
+[2025-10-10T20:02:54Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 0..5 }
+[2025-10-10T20:02:54Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 8..11 }
+[2025-10-10T20:02:54Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 8..11 }
+[2025-10-10T20:02:54Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 0..5 }
+[2025-10-10T20:02:54Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 8..11 }
+[2025-10-10T20:02:54Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 8..11 }
+[2025-10-10T20:03:31Z INFO nomos] Logger initialized
+[2025-10-10T20:03:31Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 0..5 } OpenBracket
+[2025-10-10T20:03:31Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 8..11 } OpenBracket
+[2025-10-10T20:03:31Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 8..11 } OpenBracket
+[2025-10-10T20:03:31Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 0..5 } OpenBracket
+[2025-10-10T20:03:31Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 8..11 } OpenBracket
+[2025-10-10T20:03:31Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 8..11 } OpenBracket
+[2025-10-10T20:04:21Z INFO nomos] Logger initialized
+[2025-10-10T20:04:21Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 3..5 }
+[2025-10-10T20:04:21Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 9..11 }
+[2025-10-10T20:04:21Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 9..11 }
+[2025-10-10T20:04:21Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 3..5 }
+[2025-10-10T20:04:21Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 9..11 }
+[2025-10-10T20:04:21Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 9..11 }
+[2025-10-10T20:06:35Z INFO nomos] Logger initialized
+[2025-10-10T20:06:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 3..5 }
+[2025-10-10T20:06:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 9..11 }
+[2025-10-10T20:06:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 9..11 }
+[2025-10-10T20:06:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 3..5 }
+[2025-10-10T20:06:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 9..11 }
+[2025-10-10T20:06:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 9..11 }
+[2025-10-10T20:07:43Z INFO nomos] Logger initialized
+[2025-10-10T20:07:43Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:07:43Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:07:43Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:07:43Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:07:43Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:07:43Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:08:02Z INFO nomos] Logger initialized
+[2025-10-10T20:08:02Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:08:02Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:08:02Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:08:02Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:08:02Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:08:02Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:08:11Z INFO nomos] Logger initialized
+[2025-10-10T20:08:11Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:08:11Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:08:11Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:08:11Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:08:11Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:08:11Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:09:43Z INFO nomos] Logger initialized
+[2025-10-10T20:09:43Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:09:43Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:09:43Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:09:43Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:09:43Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:09:43Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:13:14Z INFO nomos] Logger initialized
+[2025-10-10T20:13:14Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:13:14Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:13:14Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:13:14Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:13:14Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:13:14Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 10..11 }
+[2025-10-10T20:13:20Z INFO nomos] Logger initialized
+[2025-10-10T20:13:20Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:13:20Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 5..6 }
+[2025-10-10T20:13:20Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:13:20Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:18:00Z INFO nomos] Logger initialized
+[2025-10-10T20:18:00Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:18:00Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 5..6 }
+[2025-10-10T20:18:00Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:18:00Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:19:40Z INFO nomos] Logger initialized
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 5..6 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 5..6 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 5..6 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 5..6 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:19:40Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:20:35Z INFO nomos] Logger initialized
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 5..6 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 5..6 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 5..6 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 5..6 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:20:35Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:21:23Z INFO nomos] Logger initialized
+[2025-10-10T20:21:23Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:21:23Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 5..6 }
+[2025-10-10T20:21:23Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:21:23Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:22:00Z INFO nomos] Logger initialized
+[2025-10-10T20:22:00Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 4..5 }
+[2025-10-10T20:22:00Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 5..6 }
+[2025-10-10T20:22:00Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:22:00Z INFO nomos::parser::lib] Span { source: "<< test >>", range: 11..12 }
+[2025-10-10T20:22:14Z INFO nomos] Logger initialized
+[2025-10-10T20:22:37Z INFO nomos] Logger initialized
+[2025-10-10T20:25:17Z INFO nomos] Logger initialized
+[2025-10-10T20:25:41Z INFO nomos] Logger initialized
+[2025-10-10T20:25:47Z INFO nomos] Logger initialized
+[2025-10-10T20:25:56Z INFO nomos] Logger initialized
+[2025-10-10T20:30:05Z INFO nomos] Logger initialized
+[2025-10-10T20:31:17Z INFO nomos] Logger initialized
+[2025-10-10T20:31:27Z INFO nomos] Logger initialized
+[2025-10-10T20:31:37Z INFO nomos] Logger initialized
+[2025-10-11T10:22:42Z INFO nomos] Logger initialized
