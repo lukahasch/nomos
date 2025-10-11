@@ -40,7 +40,7 @@ fn main() {
         sources: Default::default(),
     };
     let source = "<< test >>";
-    let contents = "1";
+    let contents = "def test x: i32, y: i32 = match x + y with | 1 -> 2 | _ -> 3";
 
     ctx.intern_source(source, contents);
 
