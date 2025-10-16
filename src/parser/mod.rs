@@ -27,14 +27,17 @@ impl Types for Parsed {
     type PaRec<P> = Box<Spanned<P>>;
 }
 
-/// INVARIANT: The source must exist in the context's sources map
+/// # Errors
+/// - On invalid syntax
+/// # Panics
+/// - If the source has not been interned in the context
+#[allow(clippy::result_large_err)]
 pub fn parse(ctx: &mut Context, source: &'static str) -> Result<Spanned<Term<Parsed>>, Error> {
     let contents = ctx.fetch(source).expect("Source not found").text();
     let lex = lexer::lexer(source, contents);
     match term.parse(&mut ParseContext::new(lex)) {
         Output::Ok(t) => Ok(t),
-        Output::Error(e) => Err(e),
-        Output::Fatal(e) => Err(e),
+        Output::Error(e) | Output::Fatal(e) => Err(e),
     }
 }
 
@@ -65,6 +68,7 @@ pub fn term(px: &mut ParseContext<'_>) -> Output<Spanned<Term<Parsed>>> {
         .parse(px)
 }
 
+#[allow(clippy::missing_panics_doc)]
 pub fn atomic_term(px: &mut ParseContext<'_>) -> Output<Spanned<Term<Parsed>>> {
     Or((
         function, list, tuple, block, integer, float, variable, r#if, r#let, r#match, define,
@@ -84,7 +88,7 @@ pub fn atomic_term(px: &mut ParseContext<'_>) -> Output<Spanned<Term<Parsed>>> {
                     span,
                 }
             })
-            .unwrap()
+            .expect("At least one term present")
     })
     .parse(px)
 }
