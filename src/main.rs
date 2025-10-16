@@ -40,7 +40,7 @@ fn main() {
         sources: Default::default(),
     };
     let source = "<< test >>";
-    let contents = "def test x: i32, y: i32 = match x + y with | 1 -> 2 | _ -> 3";
+    let contents = "fn x -> x + 1";
 
     ctx.intern_source(source, contents);
 
@@ -51,7 +51,7 @@ fn main() {
                     e.report().print(&mut ctx).unwrap();
                 }
             } else {
-                println!("{}", ast.s_expr());
+                println!("{}", ctx.show(&*ast));
             }
         }
         Err(e) => {

@@ -7,8 +7,10 @@
     never_type,
     min_specialization,
     macro_metavar_expr,
-    if_let_guard
+    if_let_guard,
+    formatting_options
 )]
+#![warn(clippy::all, clippy::pedantic)]
 
 pub mod error;
 pub mod impls;
@@ -17,7 +19,11 @@ use crate::{error::Error, parser::Parsed};
 use ariadne::{Cache, Source};
 pub use error::Span;
 pub use std::sync::Arc;
-use std::{collections::HashMap, sync::atomic::AtomicUsize};
+use std::{
+    collections::HashMap,
+    fmt::{Formatter, FormattingOptions},
+    sync::atomic::AtomicUsize,
+};
 static ID: AtomicUsize = AtomicUsize::new(0);
 
 pub fn id() -> usize {
@@ -34,45 +40,37 @@ pub struct Context {
 pub struct Identifier(pub usize);
 
 pub trait Types {
-    type Term;
-    type Pattern;
     type Identifier;
-    type List;
-    type Block;
+    type List<T>;
+    type Block<T>;
+    type TeRec<T>;
+    type PaRec<P>;
 }
 
 #[rustfmt::skip]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Term<T: Types> {
     /// An Error has occured, computation will continue until this Error is encountered and then the error will be bubbled up
     Error(Error),
     Integer(i64),
     Float(f64),
-    List(T::List),
-    Block(T::Block),
-    Application { function: T::Term, argument: T::Term },
-    Function { pattern: T::Pattern, body: T::Term },
+    List(T::List<Self>),
+    Block(T::Block<Self>),
+    Application { function: T::TeRec<Self>, argument: T::TeRec<Self> },
+    Function { pattern: T::PaRec<Pattern<T>>, body: T::TeRec<Self> },
     Variable(T::Identifier),
-    Let { pattern: T::Pattern, value: T::Term, body: Option<T::Term> },
-    Define { pattern: T::Pattern, value: T::Term, body: Option<T::Term> },
-    If { condition: T::Term, then: T::Term, r#else: T::Term },
-    Match { value: T::Term, branches: Vec<(T::Pattern, T::Term)> },
+    Let { pattern: T::PaRec<Pattern<T>>, value: T::TeRec<Self>, body: Option<T::TeRec<Self>> },
+    Define { pattern: T::PaRec<Pattern<T>>, value: T::TeRec<Self>, body: Option<T::TeRec<Self>> },
+    If { condition: T::TeRec<Self>, then: T::TeRec<Self>, r#else: T::TeRec<Self> },
+    Match { value: T::TeRec<Self>, branches: Branches<T> },
     Inference(usize),
     LangItem(LangItem),
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum LangItem {
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-    Equals,
-    NotEquals,
-    GreaterThan,
-    LessThan,
-    GreaterThanOrEqual,
-    LessThanOrEqual,
-}
+pub type Branches<T> = Vec<(
+    <T as Types>::PaRec<Pattern<T>>,
+    <T as Types>::TeRec<Term<T>>,
+)>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Pattern<T: Types> {
@@ -80,17 +78,26 @@ pub enum Pattern<T: Types> {
     Wildcard,
     Capture(T::Identifier),
     Rest,
-    List(Vec<T::Pattern>),
+    List(Vec<T::PaRec<Self>>),
     As {
-        pattern: T::Pattern,
+        pattern: T::PaRec<Self>,
         name: T::Identifier,
     },
     If {
-        pattern: T::Pattern,
-        condition: T::Term,
+        pattern: T::PaRec<Self>,
+        condition: T::TeRec<Term<T>>,
     },
     Integer(i64),
     Float(f64),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum LangItem {
+    Add,
+}
+
+pub trait Show {
+    fn show(&self, ctx: &Context, fmt: &mut Formatter<'_>) -> std::fmt::Result;
 }
 
 impl Default for Context {
@@ -118,6 +125,13 @@ impl Context {
         let id = Identifier(id());
         self.variables.insert(id, v.to_string());
         id
+    }
+
+    pub fn show(&self, v: &impl Show) -> String {
+        let mut write = String::new();
+        let mut fmt = Formatter::new(&mut write, FormattingOptions::default());
+        v.show(self, &mut fmt).unwrap();
+        write
     }
 }
 
@@ -152,70 +166,6 @@ impl Cache<&'static str> for Context {
 }
 
 impl Term<Parsed> {
-    pub fn s_expr(&self) -> String {
-        match self {
-            Term::LangItem(item) => format!("(LangItem {:?})", item),
-            Term::Error(e) => format!("(Error {})", e),
-            Term::Integer(i) => format!("{}", i),
-            Term::Float(f) => format!("{}", f),
-            Term::List(a) => format!(
-                "(List {})",
-                a.iter().map(|v| v.s_expr()).collect::<Vec<_>>().join(" ")
-            ),
-            Term::Block(a) => format!(
-                "(Block {})",
-                a.iter().map(|v| v.s_expr()).collect::<Vec<_>>().join(" ")
-            ),
-            Term::Application { function, argument } => {
-                format!("(App {} {})", function.s_expr(), argument.s_expr())
-            }
-            Term::Function { pattern, body } => {
-                format!("(Fun {} {})", pattern.s_expr(), body.s_expr())
-            }
-            Term::Variable(v) => format!("(Var {})", v.item),
-            Term::Let {
-                pattern,
-                value,
-                body,
-            } => format!(
-                "(Let {} {} {})",
-                pattern.s_expr(),
-                value.s_expr(),
-                body.as_ref().map_or("None".to_string(), |b| b.s_expr())
-            ),
-            Term::Define {
-                pattern,
-                value,
-                body,
-            } => format!(
-                "(Def {} {} {})",
-                pattern.s_expr(),
-                value.s_expr(),
-                body.as_ref().map_or("None".to_string(), |b| b.s_expr())
-            ),
-            Term::If {
-                condition,
-                then,
-                r#else,
-            } => format!(
-                "(If {} {} {})",
-                condition.s_expr(),
-                then.s_expr(),
-                r#else.s_expr()
-            ),
-            Term::Match { value, branches } => format!(
-                "(Match {} {})",
-                value.s_expr(),
-                branches
-                    .iter()
-                    .map(|(p, t)| format!("({} {})", p.s_expr(), t.s_expr()))
-                    .collect::<Vec<_>>()
-                    .join(" ")
-            ),
-            Term::Inference(i) => format!("(Inference {})", i),
-        }
-    }
-
     pub fn contains_error(&self) -> bool {
         match self {
             Term::Error(_) => true,
@@ -329,25 +279,6 @@ impl Term<Parsed> {
 }
 
 impl Pattern<Parsed> {
-    fn s_expr(&self) -> String {
-        match self {
-            Pattern::Error(e) => format!("(Error {})", e),
-            Pattern::Wildcard => "_".to_string(),
-            Pattern::Capture(v) => format!("(Capture {})", v.item),
-            Pattern::Rest => "...".to_string(),
-            Pattern::List(a) => format!(
-                "(List {})",
-                a.iter().map(|v| v.s_expr()).collect::<Vec<_>>().join(" ")
-            ),
-            Pattern::As { pattern, name } => format!("(As {} {})", pattern.s_expr(), name.item),
-            Pattern::If { pattern, condition } => {
-                format!("(If {} {})", pattern.s_expr(), condition.s_expr())
-            }
-            Pattern::Integer(i) => format!("{}", i),
-            Pattern::Float(f) => format!("{}", f),
-        }
-    }
-
     fn contains_error(&self) -> bool {
         match self {
             Pattern::Error(_) => true,

@@ -83,8 +83,8 @@ pub fn lexer<'a>(source: &'static str, contents: &'a str) -> logos::Lexer<'a, To
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Token::Integer(i) => write!(f, "{}", i),
-            Token::Float(fl) => write!(f, "{}", fl),
+            Token::Integer(i) => write!(f, "'{}'", i),
+            Token::Float(fl) => write!(f, "'{}'", fl),
             Token::OpenBracket => write!(f, "'['"),
             Token::CloseBracket => write!(f, "']'"),
             Token::OpenParen => write!(f, "'('"),
@@ -105,7 +105,7 @@ impl Display for Token {
             Token::Ellipsis => write!(f, "'...'"),
             Token::At => write!(f, "'@'"),
             Token::Equals => write!(f, "'='"),
-            Token::Identifier(name) => write!(f, "{}", name),
+            Token::Identifier(name) => write!(f, "'{}'", name),
             Token::Pipe => write!(f, "'|'"),
             Token::Def => write!(f, "'def'"),
             Token::Semicolon => write!(f, "';'"),

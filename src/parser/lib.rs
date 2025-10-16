@@ -368,14 +368,6 @@ pub trait Parser {
         }
     }
 
-    fn or<P>(self, p: P) -> impl Parser<Output = Self::Output> + Sized
-    where
-        Self: Sized,
-        P: Parser<Output = Self::Output>,
-    {
-        Or((self, p))
-    }
-
     fn operators(
         self,
         prefix: impl Parser<Output = Prefix<Self::Output>>,
@@ -530,9 +522,6 @@ where
 
 pub fn skip_delimited(open: Token, close: Token) -> impl Recoverer<Term<Parsed>> {
     move |err: Error, px: &mut ParseContext<'_>| {
-        if open != Token::OpenBrace {
-            return Output::Error(err);
-        }
         match just(open.clone()).parse(px) {
             Output::Ok(_) => {}
             Output::Error(_) => return Output::Error(err),

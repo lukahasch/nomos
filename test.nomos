@@ -1,5 +1,10 @@
-10 + 10
-implies::(x, a)
+def x = enum Color { Red, Green, Blue }
 
+typeclass Constant(name: [..char]) {
+    def type: Type;
+    def constant: fn Self -> Self::type;
+}
 
-let implies = for(a, b) where (a <: b) true
+Color::Red.value
+
+Color::Red

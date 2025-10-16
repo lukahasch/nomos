@@ -8,6 +8,8 @@ use std::{
 use thiserror::Error;
 use yansi::Paint;
 
+pub mod extract;
+
 use crate::parser::{lexer::Token, lib::ParseContext};
 
 pub const CORRECT: Color = Color::Green;
@@ -190,6 +192,7 @@ impl From<Token> for Found {
 }
 
 impl Error {
+    #[must_use = "Pure function, non use calls should be removed"]
     pub fn from_lexer(lex: &Lexer<Token>) -> Self {
         let span = Span::new(lex.extras, lex.span());
         match lex.slice().chars().next() {
@@ -198,6 +201,7 @@ impl Error {
         }
     }
 
+    #[must_use = "Pure function, non use calls should be removed"]
     pub fn exp_found(expected: Expected, found: Token, px: &ParseContext) -> Self {
         Error::ExpectedFound {
             expected,
@@ -206,33 +210,39 @@ impl Error {
         }
     }
 
+    #[must_use = "Pure function, non use calls should be removed"]
     pub fn span(&self) -> Option<Span> {
         match self {
             Error::Shrug => None,
-            Error::ExpectedFound { span, .. } => Some(span),
-            Error::ExpectedOneOf { span, .. } => Some(span),
-            Error::UnknownCharacter(_, span) => Some(span),
-            Error::InvalidInteger(_, span) => Some(span),
-            Error::InvalidFloat(_, span) => Some(span),
-            Error::FoundExpected { found_span, .. } => Some(found_span),
-            Error::Unclosed(_, span) => Some(span),
-            Error::MismatchedClosing { found_span, .. } => Some(found_span),
+            Error::ExpectedFound { span, .. }
+            | Error::ExpectedOneOf { span, .. }
+            | Error::UnknownCharacter(_, span)
+            | Error::InvalidInteger(_, span)
+            | Error::InvalidFloat(_, span)
+            | Error::FoundExpected {
+                found_span: span, ..
+            }
+            | Error::Unclosed(_, span)
+            | Error::MismatchedClosing {
+                found_span: span, ..
+            } => Some(span),
         }
         .cloned()
     }
 
+    #[must_use = "Pure function, non use calls should be removed"]
     pub fn sources(&self) -> Option<Vec<Span>> {
         match self {
             Error::Shrug => None,
-            Error::ExpectedFound { span, .. } => Some(vec![span.clone()]),
-            Error::ExpectedOneOf { span, .. } => Some(vec![span.clone()]),
-            Error::UnknownCharacter(_, span) => Some(vec![span.clone()]),
-            Error::InvalidInteger(_, span) => Some(vec![span.clone()]),
-            Error::InvalidFloat(_, span) => Some(vec![span.clone()]),
+            Error::ExpectedFound { span, .. }
+            | Error::ExpectedOneOf { span, .. }
+            | Error::UnknownCharacter(_, span)
+            | Error::InvalidInteger(_, span)
+            | Error::InvalidFloat(_, span)
+            | Error::Unclosed(_, span) => Some(vec![span.clone()]),
             Error::FoundExpected {
                 opened, found_span, ..
             } => Some(vec![opened.clone(), found_span.clone()]),
-            Error::Unclosed(_, span) => Some(vec![span.clone()]),
             Error::MismatchedClosing {
                 opened,
                 found_span,
@@ -246,44 +256,18 @@ impl Error {
         }
     }
 
+    #[must_use = "Pure function, non use calls should be removed"]
     pub fn report(&self) -> Report<'_, Span> {
         match self {
             Self::Shrug => Report::build(ReportKind::Error, Span::new("somewhere", 0..0))
                 .with_message(self.to_string())
                 .finish(),
-            Self::ExpectedFound { span, .. } => Report::build(ReportKind::Error, span.clone())
-                .with_message(self.to_string())
-                .with_label(
-                    Label::new(span.clone())
-                        .with_message(self.to_string())
-                        .with_color(ERROR),
-                )
-                .finish(),
-            Self::ExpectedOneOf { span, .. } => Report::build(ReportKind::Error, span.clone())
-                .with_message(self.to_string())
-                .with_label(
-                    Label::new(span.clone())
-                        .with_message(self.to_string())
-                        .with_color(ERROR),
-                )
-                .finish(),
-            Self::UnknownCharacter(_, span) => Report::build(ReportKind::Error, span.clone())
-                .with_message(self.to_string())
-                .with_label(
-                    Label::new(span.clone())
-                        .with_message(self.to_string())
-                        .with_color(ERROR),
-                )
-                .finish(),
-            Self::InvalidInteger(_, span) => Report::build(ReportKind::Error, span.clone())
-                .with_message(self.to_string())
-                .with_label(
-                    Label::new(span.clone())
-                        .with_message(self.to_string())
-                        .with_color(ERROR),
-                )
-                .finish(),
-            Self::InvalidFloat(_, span) => Report::build(ReportKind::Error, span.clone())
+            Self::ExpectedFound { span, .. }
+            | Self::ExpectedOneOf { span, .. }
+            | Self::UnknownCharacter(_, span)
+            | Self::InvalidInteger(_, span)
+            | Self::Unclosed(_, span)
+            | Self::InvalidFloat(_, span) => Report::build(ReportKind::Error, span.clone())
                 .with_message(self.to_string())
                 .with_label(
                     Label::new(span.clone())
@@ -317,14 +301,6 @@ impl Error {
                         ))
                         .with_order(1)
                         .with_color(INFO),
-                )
-                .finish(),
-            Self::Unclosed(_, span) => Report::build(ReportKind::Error, span.clone())
-                .with_message(self.to_string())
-                .with_label(
-                    Label::new(span.clone())
-                        .with_message(self.to_string())
-                        .with_color(ERROR),
                 )
                 .finish(),
             Self::MismatchedClosing {
@@ -383,7 +359,7 @@ where
             "{}",
             self.0
                 .iter()
-                .map(|e| e.to_string())
+                .map(T::to_string)
                 .collect::<Vec<_>>()
                 .join(", ")
         )
@@ -414,6 +390,7 @@ impl<T> IntoIterator for OneOf<T> {
 }
 
 impl<T: std::hash::Hash + PartialEq + Clone + Eq> OneOf<T> {
+    #[must_use = "Takes self by value and returns a new deduplicated instance"]
     pub fn dedup(self) -> Self {
         OneOf(
             std::collections::HashSet::<T>::from_iter(self.0)
@@ -485,10 +462,12 @@ impl PartialOrd for Span {
 }
 
 impl Span {
+    #[must_use = "Pure function, non use calls should be removed"]
     pub fn new(source: &'static str, range: Range<usize>) -> Self {
         Span { source, range }
     }
 
+    #[must_use = "Returns a new Span"]
     pub fn extend_to(&self, to: usize) -> Self {
         Span {
             source: self.source,
@@ -496,6 +475,7 @@ impl Span {
         }
     }
 
+    #[must_use = "Returns a new Span"]
     pub fn begin(self) -> Self {
         Span {
             source: self.source,

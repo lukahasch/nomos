@@ -1,5 +1,5 @@
 use crate::{
-    Context, LangItem, Pattern, Term, Types,
+    Context, LangItem, Term, Types,
     error::{Error, Expected},
     parser::{
         lexer::Token,
@@ -16,14 +16,15 @@ pub mod lexer;
 pub mod lib;
 pub mod pattern;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Parsed;
 
 impl Types for Parsed {
-    type Term = Box<Spanned<Term<Self>>>;
     type Identifier = Spanned<String>;
-    type List = Vec<Spanned<Term<Self>>>;
-    type Block = Vec<Spanned<Term<Self>>>;
-    type Pattern = Box<Spanned<Pattern<Self>>>;
+    type List<T> = Vec<Spanned<T>>;
+    type Block<T> = Vec<Spanned<T>>;
+    type TeRec<T> = Box<Spanned<T>>;
+    type PaRec<P> = Box<Spanned<P>>;
 }
 
 /// INVARIANT: The source must exist in the context's sources map
