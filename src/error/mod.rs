@@ -62,6 +62,7 @@ pub enum Error {
     },
 }
 
+#[must_use = "Pure function, non use calls should be removed"]
 pub fn rainbow(str: &str) -> String {
     let colors = ["red", "yellow", "green", "cyan", "blue", "magenta"];
     str.chars()

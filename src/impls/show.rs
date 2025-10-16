@@ -2,15 +2,16 @@ use crate::{Pattern, Show, Term, parser::Parsed};
 use std::ops::Deref;
 
 impl Show for Term<Parsed> {
+    #[allow(clippy::explicit_deref_methods)]
     fn show(&self, ctx: &crate::Context, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             fmt,
             "{}",
             match self {
-                Term::LangItem(item) => format!("(LangItem {:?})", item),
-                Term::Error(e) => format!("(Error {})", e),
-                Term::Integer(i) => format!("{}", i),
-                Term::Float(f) => format!("{}", f),
+                Term::LangItem(item) => format!("(LangItem {item:?})",),
+                Term::Error(e) => format!("(Error {e})"),
+                Term::Integer(i) => format!("{i}"),
+                Term::Float(f) => format!("{f}"),
                 Term::List(a) => format!(
                     "(List {})",
                     a.iter()
@@ -85,7 +86,7 @@ impl Show for Term<Parsed> {
                         .collect::<Vec<_>>()
                         .join(" ")
                 ),
-                Term::Inference(i) => format!("(Inference {})", i),
+                Term::Inference(i) => format!("(Inference {i})"),
             }
         )
     }
@@ -97,7 +98,7 @@ impl Show for Pattern<Parsed> {
             fmt,
             "{}",
             match self {
-                Pattern::Error(e) => format!("(Error {})", e),
+                Pattern::Error(e) => format!("(Error {e})"),
                 Pattern::Wildcard => "_".to_string(),
                 Pattern::Capture(v) => format!("(Capture {})", v.item),
                 Pattern::Rest => "...".to_string(),
@@ -117,8 +118,8 @@ impl Show for Pattern<Parsed> {
                         ctx.show(condition.deref().deref())
                     )
                 }
-                Pattern::Integer(i) => format!("{}", i),
-                Pattern::Float(f) => format!("{}", f),
+                Pattern::Integer(i) => format!("{i}"),
+                Pattern::Float(f) => format!("{f}"),
             }
         )
     }
