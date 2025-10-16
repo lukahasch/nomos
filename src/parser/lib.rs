@@ -23,6 +23,7 @@ pub struct ParseContext<'a> {
 }
 
 impl<'a> ParseContext<'a> {
+    #[must_use = "ParseContext should not be created without being used"]
     pub fn new(lexer: Lexer<'a, Token>) -> Self {
         Self {
             lexer,
@@ -30,10 +31,12 @@ impl<'a> ParseContext<'a> {
         }
     }
 
+    #[must_use = "Pure function, non use calls should be removed"]
     pub fn extras(&self) -> &'static str {
         self.lexer.extras
     }
 
+    #[must_use = "Pure function, non use calls should be removed"]
     pub fn span(&self) -> std::ops::Range<usize> {
         self.lexer.span()
     }
@@ -351,8 +354,7 @@ pub trait Parser {
     {
         move |px: &mut ParseContext<'_>| match self.parse(px) {
             Output::Ok(t) => Output::Ok(t),
-            Output::Error(e) => Output::Fatal(e),
-            Output::Fatal(e) => Output::Fatal(e),
+            Output::Error(e) | Output::Fatal(e) => Output::Fatal(e),
         }
     }
 
@@ -363,8 +365,7 @@ pub trait Parser {
     {
         move |px: &mut ParseContext<'_>| match self.r#ref().backtrack().parse(px) {
             Output::Ok(t) => Output::Ok(t),
-            Output::Error(e) => r.recover(e, px),
-            Output::Fatal(e) => r.recover(e, px),
+            Output::Error(e) | Output::Fatal(e) => r.recover(e, px),
         }
     }
 
@@ -497,22 +498,24 @@ impl<O> Postfix<O> {
 }
 
 pub trait Recoverer<O> {
-    fn recover<'b, 'a>(&self, err: Error, px: &'b mut ParseContext<'a>) -> Output<O>;
+    fn recover(&self, err: Error, px: &mut ParseContext) -> Output<O>;
 }
 
 impl<F, O> Recoverer<O> for F
 where
     F: Fn(Error, &mut ParseContext<'_>) -> Output<O>,
 {
-    fn recover<'b, 'a>(&self, err: Error, px: &'b mut ParseContext<'a>) -> Output<O> {
+    fn recover(&self, err: Error, px: &mut ParseContext) -> Output<O> {
         self(err, px)
     }
 }
 
+#[must_use = "Parsers do nothing unless you use them"]
 pub fn error<T>(err: Error) -> impl Parser<Output = T> {
     move |_: &mut ParseContext<'_>| Output::Error(err.clone())
 }
 
+#[must_use = "Parsers do nothing unless you use them"]
 pub fn okay<T>(t: T) -> impl Parser<Output = T>
 where
     T: Clone,
@@ -520,6 +523,7 @@ where
     move |_: &mut ParseContext<'_>| Output::Ok(t.clone())
 }
 
+#[must_use = "Recoverers do nothing unless you use them"]
 pub fn skip_delimited(open: Token, close: Token) -> impl Recoverer<Term<Parsed>> {
     move |err: Error, px: &mut ParseContext<'_>| {
         match just(open.clone()).parse(px) {
@@ -537,8 +541,7 @@ pub fn skip_delimited(open: Token, close: Token) -> impl Recoverer<Term<Parsed>>
                         break;
                     }
                 }
-                Some(Ok(_)) => {}
-                Some(Err(_)) => {}
+                Some(_) => {}
                 None => {
                     return Output::Error(Error::ExpectedFound {
                         expected: Expected::from(&close),
@@ -557,7 +560,7 @@ where
     F: Fn(&mut ParseContext<'_>) -> Output<O>,
 {
     type Output = O;
-    fn parse<'b, 'a>(&self, px: &'b mut ParseContext<'a>) -> Output<Self::Output> {
+    fn parse(&self, px: &mut ParseContext) -> Output<Self::Output> {
         self(px)
     }
 }
@@ -574,6 +577,7 @@ pub fn token(px: &mut ParseContext<'_>, expected: Expected) -> Output<Token> {
     }
 }
 
+#[must_use = "Parsers do nothing unless you use them"]
 pub fn just(token: Token) -> impl Parser<Output = Token> {
     move |px: &mut ParseContext<'_>| match px.lexer.next() {
         Some(Ok(t)) if t == token => Output::Ok(t),
@@ -612,7 +616,7 @@ macro_rules! impl_or {
             type Output = $first::Output;
 
             #[allow(non_snake_case)]
-            fn parse<'b, 'a>(&self, px: &'b mut ParseContext<'a>) -> $crate::parser::lib::Output<Self::Output> {
+            fn parse(&self, px: &mut ParseContext) -> $crate::parser::lib::Output<Self::Output> {
                 let (ref $first, $(ref $ident,)*) = self.0;
                 let mut err = Error::Shrug;
 

@@ -64,18 +64,21 @@ pub enum Token {
     Plus,
 }
 
+#[allow(clippy::result_large_err)]
 fn lex_integer(lex: &Lexer<Token>) -> Result<i64, Error> {
     lex.slice().parse().map_err(|_| {
         Error::InvalidInteger(lex.slice().to_string(), Span::new(lex.extras, lex.span()))
     })
 }
 
+#[allow(clippy::result_large_err)]
 fn lex_float(lex: &Lexer<Token>) -> Result<f64, Error> {
     lex.slice().parse().map_err(|_| {
         Error::InvalidFloat(lex.slice().to_string(), Span::new(lex.extras, lex.span()))
     })
 }
 
+#[must_use = "Lexer does nothing unless you use it"]
 pub fn lexer<'a>(source: &'static str, contents: &'a str) -> logos::Lexer<'a, Token> {
     Token::lexer_with_extras(contents, source)
 }
@@ -83,8 +86,8 @@ pub fn lexer<'a>(source: &'static str, contents: &'a str) -> logos::Lexer<'a, To
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Token::Integer(i) => write!(f, "'{}'", i),
-            Token::Float(fl) => write!(f, "'{}'", fl),
+            Token::Integer(i) => write!(f, "'{i}'"),
+            Token::Float(fl) => write!(f, "'{fl}'"),
             Token::OpenBracket => write!(f, "'['"),
             Token::CloseBracket => write!(f, "']'"),
             Token::OpenParen => write!(f, "'('"),
@@ -105,7 +108,7 @@ impl Display for Token {
             Token::Ellipsis => write!(f, "'...'"),
             Token::At => write!(f, "'@'"),
             Token::Equals => write!(f, "'='"),
-            Token::Identifier(name) => write!(f, "'{}'", name),
+            Token::Identifier(name) => write!(f, "'{name}'"),
             Token::Pipe => write!(f, "'|'"),
             Token::Def => write!(f, "'def'"),
             Token::Semicolon => write!(f, "';'"),
