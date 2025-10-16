@@ -48,6 +48,12 @@ pub struct Spanned<T> {
     pub span: Span,
 }
 
+impl<T> Spanned<T> {
+    pub fn into_inner(self) -> T {
+        self.item
+    }
+}
+
 impl<T> Deref for Spanned<T> {
     type Target = T;
 

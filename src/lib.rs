@@ -97,6 +97,8 @@ pub enum LangItem {
 }
 
 pub trait Show {
+    /// # Errors
+    /// - On write failure
     fn show(&self, ctx: &Context, fmt: &mut Formatter<'_>) -> std::fmt::Result;
 }
 
@@ -107,6 +109,7 @@ impl Default for Context {
 }
 
 impl Context {
+    #[must_use = "Context does nothing unless you use it"]
     pub fn new() -> Self {
         Self {
             variables: HashMap::new(),
@@ -162,153 +165,5 @@ impl Cache<&'static str> for Context {
 
     fn display<'a>(&self, id: &'a &'static str) -> Option<impl std::fmt::Display + 'a> {
         Some(id)
-    }
-}
-
-impl Term<Parsed> {
-    pub fn contains_error(&self) -> bool {
-        match self {
-            Term::Error(_) => true,
-            Term::List(a) => a.iter().any(|v| v.contains_error()),
-            Term::Block(a) => a.iter().any(|v| v.contains_error()),
-            Term::Application { function, argument } => {
-                function.contains_error() || argument.contains_error()
-            }
-            Term::Function { pattern, body } => pattern.contains_error() || body.contains_error(),
-            Term::Let {
-                pattern,
-                value,
-                body,
-            } => {
-                pattern.contains_error()
-                    || value.contains_error()
-                    || body.as_ref().is_some_and(|b| b.contains_error())
-            }
-            Term::Define {
-                pattern,
-                value,
-                body,
-            } => {
-                pattern.contains_error()
-                    || value.contains_error()
-                    || body.as_ref().is_some_and(|b| b.contains_error())
-            }
-            Term::If {
-                condition,
-                then,
-                r#else,
-            } => condition.contains_error() || then.contains_error() || r#else.contains_error(),
-            Term::Match { value, branches } => {
-                value.contains_error()
-                    || branches
-                        .iter()
-                        .any(|(p, t)| p.contains_error() || t.contains_error())
-            }
-            Term::Integer(_)
-            | Term::Float(_)
-            | Term::Variable(_)
-            | Term::Inference(_)
-            | Term::LangItem(_) => false,
-        }
-    }
-
-    pub fn collect_errors(self) -> Vec<Error> {
-        let mut errors = Vec::new();
-        self.collect_errors_into(&mut errors);
-        errors
-    }
-
-    pub fn collect_errors_into(&self, errors: &mut Vec<Error>) {
-        match self {
-            Term::Error(e) => errors.push(e.clone()),
-            Term::List(a) => a.iter().for_each(|v| v.collect_errors_into(errors)),
-            Term::Block(a) => a.iter().for_each(|v| v.collect_errors_into(errors)),
-            Term::Application { function, argument } => {
-                function.collect_errors_into(errors);
-                argument.collect_errors_into(errors);
-            }
-            Term::Function { pattern, body } => {
-                pattern.collect_errors_into(errors);
-                body.collect_errors_into(errors);
-            }
-            Term::Let {
-                pattern,
-                value,
-                body,
-            } => {
-                pattern.collect_errors_into(errors);
-                value.collect_errors_into(errors);
-                if let Some(b) = body {
-                    b.collect_errors_into(errors);
-                }
-            }
-            Term::Define {
-                pattern,
-                value,
-                body,
-            } => {
-                pattern.collect_errors_into(errors);
-                value.collect_errors_into(errors);
-                if let Some(b) = body {
-                    b.collect_errors_into(errors);
-                }
-            }
-            Term::If {
-                condition,
-                then,
-                r#else,
-            } => {
-                condition.collect_errors_into(errors);
-                then.collect_errors_into(errors);
-                r#else.collect_errors_into(errors);
-            }
-            Term::Match { value, branches } => {
-                value.collect_errors_into(errors);
-                branches.iter().for_each(|(p, t)| {
-                    p.collect_errors_into(errors);
-                    t.collect_errors_into(errors);
-                });
-            }
-            Term::Integer(_)
-            | Term::Float(_)
-            | Term::Variable(_)
-            | Term::Inference(_)
-            | Term::LangItem(_) => {}
-        }
-    }
-}
-
-impl Pattern<Parsed> {
-    fn contains_error(&self) -> bool {
-        match self {
-            Pattern::Error(_) => true,
-            Pattern::As { pattern, .. } => pattern.contains_error(),
-            Pattern::If { pattern, condition } => {
-                pattern.contains_error() || condition.contains_error()
-            }
-            Pattern::List(a) => a.iter().any(|p| p.contains_error()),
-            Pattern::Wildcard
-            | Pattern::Capture(_)
-            | Pattern::Rest
-            | Pattern::Integer(_)
-            | Pattern::Float(_) => false,
-        }
-    }
-
-    fn collect_errors_into(&self, errors: &mut Vec<Error>) {
-        match self {
-            Pattern::Error(e) => errors.push(e.clone()),
-            Pattern::As { pattern, .. } => pattern.collect_errors_into(errors),
-            Pattern::If { pattern, condition } => {
-                pattern.collect_errors_into(errors);
-                condition.collect_errors_into(errors);
-            }
-            Pattern::List(a) => a.iter().for_each(|p| p.collect_errors_into(errors)),
-            Pattern::Wildcard
-            | Pattern::Capture(_)
-            | Pattern::Rest
-            | Pattern::Integer(_)
-            | Pattern::Float(_) => {}
-        }
     }
 }
