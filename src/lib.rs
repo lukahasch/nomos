@@ -12,23 +12,20 @@
 )]
 #![warn(clippy::all, clippy::pedantic)]
 
-pub mod error;
-pub mod impls;
-pub mod parser;
-use crate::error::Error;
+pub use crate::{
+    error::{Error, Span},
+    id::{Id, id},
+};
 use ariadne::{Cache, Source};
-pub use error::Span;
-pub use std::sync::Arc;
 use std::{
     collections::HashMap,
     fmt::{Formatter, FormattingOptions},
-    sync::atomic::AtomicUsize,
 };
-static ID: AtomicUsize = AtomicUsize::new(0);
 
-pub fn id() -> usize {
-    ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-}
+pub mod error;
+pub mod id;
+pub mod impls;
+pub mod parser;
 
 pub struct Context {
     pub variables: HashMap<Identifier, String>,
@@ -37,7 +34,7 @@ pub struct Context {
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Copy)]
 #[repr(transparent)]
-pub struct Identifier(pub usize);
+pub struct Identifier(Id);
 
 pub trait Types {
     type Identifier;
