@@ -1,6 +1,6 @@
 use crate::{
     Context, LangItem, Term, Types,
-    error::{Error, Expected},
+    error::{Error, Expected, extract::ExtractError},
     parser::{
         lexer::Token,
         lib::{
@@ -32,12 +32,13 @@ impl Types for Parsed {
 /// # Panics
 /// - If the source has not been interned in the context
 #[allow(clippy::result_large_err)]
-pub fn parse(ctx: &mut Context, source: &'static str) -> Result<Spanned<Term<Parsed>>, Error> {
+pub fn parse(ctx: &mut Context, source: &'static str) -> Result<Spanned<Term<Parsed>>, Vec<Error>> {
     let contents = ctx.fetch(source).expect("Source not found").text();
     let lex = lexer::lexer(source, contents);
     match term.parse(&mut ParseContext::new(lex)) {
-        Output::Ok(t) => Ok(t),
-        Output::Error(e) | Output::Fatal(e) => Err(e),
+        Output::Ok(t) if !t.contains_error() => Ok(t),
+        Output::Ok(t) => Err(t.into_inner().collect_errors()),
+        Output::Error(e) | Output::Fatal(e) => Err(vec![e]),
     }
 }
 

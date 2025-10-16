@@ -46,16 +46,12 @@ fn main() {
 
     match parse(&mut ctx, source) {
         Ok(ast) => {
-            if ast.contains_error() {
-                for e in ast.item.collect_errors() {
-                    e.report().print(&mut ctx).unwrap();
-                }
-            } else {
-                println!("{}", ctx.show(&*ast));
-            }
+            println!("{}", ctx.show(&*ast));
         }
         Err(e) => {
-            e.report().print(ctx).unwrap();
+            for e in e {
+                e.report().print(&mut ctx).unwrap();
+            }
         }
     }
 }
