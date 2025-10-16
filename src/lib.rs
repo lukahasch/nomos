@@ -15,7 +15,7 @@
 pub mod error;
 pub mod impls;
 pub mod parser;
-use crate::{error::Error, parser::Parsed};
+use crate::error::Error;
 use ariadne::{Cache, Source};
 pub use error::Span;
 pub use std::sync::Arc;
@@ -130,10 +130,12 @@ impl Context {
         id
     }
 
+    #[allow(clippy::missing_panics_doc)]
     pub fn show(&self, v: &impl Show) -> String {
         let mut write = String::new();
         let mut fmt = Formatter::new(&mut write, FormattingOptions::default());
-        v.show(self, &mut fmt).unwrap();
+        v.show(self, &mut fmt)
+            .expect("writing to string should not fail");
         write
     }
 }

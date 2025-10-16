@@ -1,4 +1,4 @@
-use ariadne::*;
+use ariadne::{Label, Report, ReportKind};
 use logos::Lexer;
 use std::{
     cmp::Ordering,
@@ -6,7 +6,7 @@ use std::{
     ops::{Deref, DerefMut, Range},
 };
 use thiserror::Error;
-use yansi::Paint;
+use yansi::{Color, Paint};
 
 pub mod extract;
 

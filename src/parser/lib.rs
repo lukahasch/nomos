@@ -125,7 +125,7 @@ macro_rules! statemachine {
 
 pub trait Parser {
     type Output;
-    fn parse<'b, 'a>(&self, px: &'b mut ParseContext<'a>) -> Output<Self::Output>;
+    fn parse(&self, px: &mut ParseContext) -> Output<Self::Output>;
 
     fn spanned(self) -> impl Parser<Output = Spanned<Self::Output>> + Sized
     where
