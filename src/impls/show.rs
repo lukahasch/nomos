@@ -1,4 +1,4 @@
-use crate::{Pattern, Show, Term, parser::Parsed};
+use crate::{Pattern, Show, Term, Type, parser::Parsed};
 use std::ops::Deref;
 
 impl Show for Term<Parsed> {
@@ -10,6 +10,7 @@ impl Show for Term<Parsed> {
             match self {
                 Term::LangItem(item) => format!("(LangItem {item:?})",),
                 Term::Error(e) => format!("(Error {e})"),
+                Term::Type(ty) => format!("(Type {})", ctx.show(ty)),
                 Term::Integer(i) => format!("{i}"),
                 Term::Float(f) => format!("{f}"),
                 Term::List(a) => format!(
@@ -99,6 +100,11 @@ impl Show for Pattern<Parsed> {
             "{}",
             match self {
                 Pattern::Error(e) => format!("(Error {e})"),
+                Pattern::Typed { pattern, ty } => format!(
+                    "(Typed {} {})",
+                    ctx.show(pattern.deref().deref()),
+                    ctx.show(ty.deref().deref())
+                ),
                 Pattern::Wildcard => "_".to_string(),
                 Pattern::Capture(v) => format!("(Capture {})", v.item),
                 Pattern::Rest => "...".to_string(),
@@ -120,6 +126,24 @@ impl Show for Pattern<Parsed> {
                 }
                 Pattern::Integer(i) => format!("{i}"),
                 Pattern::Float(f) => format!("{f}"),
+            }
+        )
+    }
+}
+
+impl Show for Type<Parsed> {
+    fn show(&self, ctx: &crate::Context, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            fmt,
+            "{}",
+            match self {
+                Type::Error(e) => format!("(Error {e})"),
+                Type::Variable(v) => format!("(Var {})", v.item),
+                Type::Function { parameter, result } => format!(
+                    "(Fun {} {})",
+                    ctx.show(parameter.deref().deref()),
+                    ctx.show(result.deref().deref())
+                ),
             }
         )
     }

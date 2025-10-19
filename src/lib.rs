@@ -10,8 +10,10 @@
     if_let_guard,
     formatting_options
 )]
-#![warn(clippy::all, clippy::pedantic)]
+#![warn(clippy::all)]
+#![allow(clippy::match_like_matches_macro)]
 
+use crate::{egraph::ClassId, error::Spanned};
 pub use crate::{
     error::{Error, Span},
     id::{Id, id},
@@ -20,12 +22,16 @@ use ariadne::{Cache, Source};
 use std::{
     collections::HashMap,
     fmt::{Formatter, FormattingOptions},
+    sync::Arc,
 };
 
+pub mod egraph;
 pub mod error;
 pub mod id;
 pub mod impls;
+pub mod normalize;
 pub mod parser;
+pub mod repl;
 
 pub struct Context {
     pub variables: HashMap<Identifier, String>,
@@ -38,54 +44,91 @@ pub struct Identifier(Id);
 
 pub trait Types {
     type Identifier;
-    type List<T>;
-    type Block<T>;
-    type TeRec<T>;
-    type PaRec<P>;
+    type List;
+    type Block;
+    type Term;
+    type Pattern;
 }
 
-#[rustfmt::skip]
-#[derive(Debug, Clone, PartialEq)]
+pub struct Normalized;
+
+impl Types for Normalized {
+    type Identifier = Identifier;
+    type List = Vec<ClassId>;
+    type Block = Vec<ClassId>;
+    type Term = ClassId;
+    type Pattern = Arc<Spanned<Pattern<Self>>>;
+}
+
 pub enum Term<T: Types> {
-    /// An Error has occured, computation will continue until this Error is encountered and then the error will be bubbled up
+    /// An Error has occured, computation will continue until this Error is encountered
+    /// and then the error will be bubbled up
     Error(Error),
+    Type(Type<T>),
     Integer(i64),
     Float(f64),
-    List(T::List<Self>),
-    Block(T::Block<Self>),
-    Application { function: T::TeRec<Self>, argument: T::TeRec<Self> },
-    Function { pattern: T::PaRec<Pattern<T>>, body: T::TeRec<Self> },
+    List(T::List),
+    Block(T::Block),
+    Application {
+        function: T::Term,
+        argument: T::Term,
+    },
+    Function {
+        pattern: T::Pattern,
+        body: T::Term,
+    },
     Variable(T::Identifier),
-    Let { pattern: T::PaRec<Pattern<T>>, value: T::TeRec<Self>, body: Option<T::TeRec<Self>> },
-    Define { pattern: T::PaRec<Pattern<T>>, value: T::TeRec<Self>, body: Option<T::TeRec<Self>> },
-    If { condition: T::TeRec<Self>, then: T::TeRec<Self>, r#else: T::TeRec<Self> },
-    Match { value: T::TeRec<Self>, branches: Branches<T> },
+    Let {
+        pattern: T::Pattern,
+        value: T::Term,
+        body: Option<T::Term>,
+    },
+    Define {
+        pattern: T::Pattern,
+        value: T::Term,
+        body: Option<T::Term>,
+    },
+    If {
+        condition: T::Term,
+        then: T::Term,
+        r#else: T::Term,
+    },
+    Match {
+        value: T::Term,
+        branches: Branches<T>,
+    },
     Inference(usize),
     LangItem(LangItem),
 }
 
-pub type Branches<T> = Vec<(
-    <T as Types>::PaRec<Pattern<T>>,
-    <T as Types>::TeRec<Term<T>>,
-)>;
+pub type Branches<T> = Vec<(<T as Types>::Pattern, <T as Types>::Term)>;
 
-#[derive(Debug, Clone, PartialEq)]
 pub enum Pattern<T: Types> {
     Error(Error),
+    Typed {
+        pattern: T::Pattern,
+        ty: T::Term,
+    },
     Wildcard,
     Capture(T::Identifier),
     Rest,
-    List(Vec<T::PaRec<Self>>),
+    List(Vec<T::Pattern>),
     As {
-        pattern: T::PaRec<Self>,
+        pattern: T::Pattern,
         name: T::Identifier,
     },
     If {
-        pattern: T::PaRec<Self>,
-        condition: T::TeRec<Term<T>>,
+        pattern: T::Pattern,
+        condition: T::Term,
     },
     Integer(i64),
     Float(f64),
+}
+
+pub enum Type<T: Types> {
+    Error(Error),
+    Variable(T::Identifier),
+    Function { parameter: T::Term, result: T::Term },
 }
 
 #[derive(Debug, Clone, PartialEq)]

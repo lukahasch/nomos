@@ -10,7 +10,10 @@
     if_let_guard
 )]
 
-use std::time::SystemTime;
+use std::{
+    io::{Write, stdin, stdout},
+    time::SystemTime,
+};
 
 use nomos::{Context, parser::parse};
 
@@ -39,19 +42,26 @@ fn main() {
         variables: Default::default(),
         sources: Default::default(),
     };
-    let source = "<< test >>";
-    let contents = "fn x -> x + 1";
+    let mut index = 0;
+    loop {
+        let source = Box::leak(Box::new(format!("<< repl@{index} >>")));
+        let mut contents = String::new();
+        print!("repl@{index} > ");
+        stdout().flush().unwrap();
+        stdin().read_line(&mut contents).unwrap();
 
-    ctx.intern_source(source, contents);
+        ctx.intern_source(source, &contents);
 
-    match parse(&mut ctx, source) {
-        Ok(ast) => {
-            println!("{}", ctx.show(&*ast));
-        }
-        Err(e) => {
-            for e in e {
-                e.report().print(&mut ctx).unwrap();
+        match parse(&mut ctx, source) {
+            Ok(ast) => {
+                println!("{}", ctx.show(&*ast));
+            }
+            Err(e) => {
+                for e in e {
+                    e.report().print(&mut ctx).unwrap();
+                }
             }
         }
+        index += 1;
     }
 }

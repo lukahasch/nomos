@@ -1,10 +1,8 @@
-use std::ops::{Deref, DerefMut};
-
 use logos::Lexer;
 
 use crate::{
     Span, Term,
-    error::{Error, Expected, Found},
+    error::{Error, Expected, Found, Spanned},
     parser::{Parsed, lexer::Token},
 };
 
@@ -39,32 +37,6 @@ impl<'a> ParseContext<'a> {
     #[must_use = "Pure function, non use calls should be removed"]
     pub fn span(&self) -> std::ops::Range<usize> {
         self.lexer.span()
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Spanned<T> {
-    pub item: T,
-    pub span: Span,
-}
-
-impl<T> Spanned<T> {
-    pub fn into_inner(self) -> T {
-        self.item
-    }
-}
-
-impl<T> Deref for Spanned<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.item
-    }
-}
-
-impl<T> DerefMut for Spanned<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.item
     }
 }
 

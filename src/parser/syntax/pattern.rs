@@ -5,6 +5,7 @@ use crate::{
         Parsed,
         lexer::Token,
         lib::{Or, Output, ParseContext, Parser, identifier, just, token},
+        syntax::ty::r#type,
         term,
     },
 };
@@ -34,6 +35,15 @@ pub fn atomic_pattern(px: &mut ParseContext) -> Output<Pattern<Parsed>> {
         float_pattern,
         list_pattern,
     ))
+    .spanned()
+    .and_then(just(Token::Colon).ignore_and(r#type).optional())
+    .map(|(pattern, ty)| match ty {
+        Some(ty) => Pattern::Typed {
+            pattern: Box::new(pattern),
+            ty: Box::new(ty),
+        },
+        None => pattern.into_inner(),
+    })
     .parse(px)
 }
 

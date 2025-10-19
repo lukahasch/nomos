@@ -1,8 +1,8 @@
 use crate::{
-    Context, Term, Types,
-    error::{Error, extract::ExtractError},
+    Context, Pattern, Term, Types,
+    error::{Error, Spanned, extract::ExtractError},
     parser::{
-        lib::{Output, ParseContext, Parser, Spanned},
+        lib::{Output, ParseContext, Parser},
         syntax::term,
     },
 };
@@ -17,10 +17,10 @@ pub struct Parsed;
 
 impl Types for Parsed {
     type Identifier = Spanned<String>;
-    type List<T> = Vec<Spanned<T>>;
-    type Block<T> = Vec<Spanned<T>>;
-    type TeRec<T> = Box<Spanned<T>>;
-    type PaRec<P> = Box<Spanned<P>>;
+    type List = Vec<Spanned<Term<Self>>>;
+    type Block = Vec<Spanned<Term<Self>>>;
+    type Term = Box<Spanned<Term<Self>>>;
+    type Pattern = Box<Spanned<Pattern<Self>>>;
 }
 
 /// # Errors

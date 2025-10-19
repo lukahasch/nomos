@@ -1,12 +1,12 @@
 use crate::{
     LangItem, Term,
-    error::{Error, Expected},
+    error::{Error, Expected, Spanned},
     parser::{
         Parsed,
         lexer::Token,
         lib::{
-            Binary, Or, Output, ParseContext, Parser, Spanned, error, identifier, just,
-            skip_delimited, token,
+            Binary, Or, Output, ParseContext, Parser, error, identifier, just, skip_delimited,
+            token,
         },
         syntax::pattern,
     },

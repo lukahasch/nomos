@@ -1,4 +1,4 @@
-use crate::{Pattern, Term, error::Error, parser::Parsed};
+use crate::{Pattern, Term, Type, error::Error, parser::Parsed};
 
 pub trait ExtractError: Sized {
     fn contains_error(&self) -> bool;
@@ -14,6 +14,7 @@ impl ExtractError for Term<Parsed> {
     fn contains_error(&self) -> bool {
         match self {
             Term::Error(_) => true,
+            Term::Type(ty) => ty.contains_error(),
             Term::List(a) => a.iter().any(|v| v.contains_error()),
             Term::Block(a) => a.iter().any(|v| v.contains_error()),
             Term::Application { function, argument } => {
@@ -60,6 +61,7 @@ impl ExtractError for Term<Parsed> {
     fn collect_errors_into(self, errors: &mut Vec<Error>) {
         match self {
             Term::Error(e) => errors.push(e.clone()),
+            Term::Type(ty) => ty.collect_errors_into(errors),
             Term::List(a) => a
                 .into_iter()
                 .for_each(|v| v.into_inner().collect_errors_into(errors)),
@@ -124,6 +126,7 @@ impl ExtractError for Pattern<Parsed> {
                 pattern.contains_error() || condition.contains_error()
             }
             Pattern::List(a) => a.iter().any(|p| p.contains_error()),
+            Pattern::Typed { pattern, ty } => pattern.contains_error() || ty.contains_error(),
             Pattern::Wildcard
             | Pattern::Capture(_)
             | Pattern::Rest
@@ -135,6 +138,10 @@ impl ExtractError for Pattern<Parsed> {
     fn collect_errors_into(self, errors: &mut Vec<Error>) {
         match self {
             Pattern::Error(e) => errors.push(e.clone()),
+            Pattern::Typed { pattern, ty } => {
+                pattern.into_inner().collect_errors_into(errors);
+                ty.into_inner().collect_errors_into(errors);
+            }
             Pattern::As { pattern, .. } => pattern.into_inner().collect_errors_into(errors),
             Pattern::If { pattern, condition } => {
                 pattern.into_inner().collect_errors_into(errors);
@@ -148,6 +155,29 @@ impl ExtractError for Pattern<Parsed> {
             | Pattern::Rest
             | Pattern::Integer(_)
             | Pattern::Float(_) => {}
+        }
+    }
+}
+
+impl ExtractError for Type<Parsed> {
+    fn contains_error(&self) -> bool {
+        match self {
+            Type::Error(_) => true,
+            _ => false,
+        }
+    }
+
+    fn collect_errors_into(self, errors: &mut Vec<Error>) {
+        match self {
+            Type::Error(e) => errors.push(e.clone()),
+            Type::Function {
+                parameter: argument,
+                result,
+            } => {
+                argument.into_inner().collect_errors_into(errors);
+                result.into_inner().collect_errors_into(errors);
+            }
+            Type::Variable(_) => {}
         }
     }
 }

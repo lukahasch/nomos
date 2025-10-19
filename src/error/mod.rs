@@ -142,6 +142,8 @@ pub enum Expected {
     Semicolon,
     #[error("'+'")]
     Plus,
+    #[error("':'")]
+    Colon,
 }
 
 impl<'a> From<&'a Token> for Expected {
@@ -174,6 +176,7 @@ impl<'a> From<&'a Token> for Expected {
             Token::Def => Expected::Def,
             Token::Semicolon => Expected::Semicolon,
             Token::Plus => Expected::Plus,
+            Token::Colon => Expected::Colon,
         }
     }
 }
@@ -184,6 +187,32 @@ pub enum Found {
     Eof,
     #[error("{0}")]
     Token(Token),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Spanned<T> {
+    pub item: T,
+    pub span: Span,
+}
+
+impl<T> Spanned<T> {
+    pub fn into_inner(self) -> T {
+        self.item
+    }
+}
+
+impl<T> Deref for Spanned<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.item
+    }
+}
+
+impl<T> DerefMut for Spanned<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.item
+    }
 }
 
 impl From<Token> for Found {

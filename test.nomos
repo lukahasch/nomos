@@ -1,10 +1,10 @@
-def x = enum Color { Red, Green, Blue }
+type Color = enum { Red, Green, Blue }
 
 typeclass Constant(name: [..char]) {
     def type: Type;
     def constant: fn Self -> Self::type;
 }
 
-Color::Red.value
+def Color::constant = 10
 
 Color::Red
