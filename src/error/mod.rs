@@ -199,6 +199,13 @@ impl<T> Spanned<T> {
     pub fn into_inner(self) -> T {
         self.item
     }
+
+    pub fn map<O>(self, f: impl FnOnce(T) -> O) -> Spanned<O> {
+        Spanned {
+            item: f(self.item),
+            span: self.span,
+        }
+    }
 }
 
 impl<T> Deref for Spanned<T> {

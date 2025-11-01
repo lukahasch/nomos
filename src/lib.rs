@@ -8,12 +8,17 @@
     min_specialization,
     macro_metavar_expr,
     if_let_guard,
-    formatting_options
+    formatting_options,
+    explicit_tail_calls
 )]
 #![warn(clippy::all)]
-#![allow(clippy::match_like_matches_macro)]
+#![allow(clippy::match_like_matches_macro, clippy::result_large_err)]
 
-use crate::{egraph::ClassId, error::Spanned};
+use crate::{
+    egraph::{ClassId, Egraph},
+    error::Spanned,
+    normalize::Namespace,
+};
 pub use crate::{
     error::{Error, Span},
     id::{Id, id},
@@ -21,9 +26,10 @@ pub use crate::{
 use ariadne::{Cache, Source};
 use std::{
     collections::HashMap,
-    fmt::{Formatter, FormattingOptions},
+    fmt::{Display, Formatter, FormattingOptions},
     sync::Arc,
 };
+use strum::AsRefStr;
 
 pub mod egraph;
 pub mod error;
@@ -31,11 +37,11 @@ pub mod id;
 pub mod impls;
 pub mod normalize;
 pub mod parser;
-pub mod repl;
 
 pub struct Context {
     pub variables: HashMap<Identifier, String>,
     pub sources: HashMap<&'static str, Source>,
+    pub egraph: Egraph,
 }
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Copy)]
@@ -60,6 +66,7 @@ impl Types for Normalized {
     type Pattern = Arc<Spanned<Pattern<Self>>>;
 }
 
+#[derive(AsRefStr)]
 pub enum Term<T: Types> {
     /// An Error has occured, computation will continue until this Error is encountered
     /// and then the error will be bubbled up
@@ -142,6 +149,12 @@ pub trait Show {
     fn show(&self, ctx: &Context, fmt: &mut Formatter<'_>) -> std::fmt::Result;
 }
 
+impl Display for Identifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:#x}", self.0.0)
+    }
+}
+
 impl Default for Context {
     fn default() -> Self {
         Self::new()
@@ -154,6 +167,7 @@ impl Context {
         Self {
             variables: HashMap::new(),
             sources: HashMap::new(),
+            egraph: Egraph::new(),
         }
     }
 
@@ -164,10 +178,22 @@ impl Context {
             .text()
     }
 
-    pub fn declare(&mut self, v: &str) -> Identifier {
+    pub fn declare(&mut self, v: impl Into<String>) -> Identifier {
         let id = Identifier(id());
-        self.variables.insert(id, v.to_string());
+        self.variables.insert(id, v.into());
         id
+    }
+
+    pub fn store(&mut self, source: &'static str) -> Result<Id, Vec<Error>> {
+        match parser::parse(self, source)?.map(|t| t.normalize(self, &mut Namespace::default())) {
+            Spanned {
+                item: Ok(term),
+                span,
+            } => Ok(self.egraph.store(Spanned { item: term, span })),
+            Spanned {
+                item: Err(errors), ..
+            } => Err(errors),
+        }
     }
 
     #[allow(clippy::missing_panics_doc)]

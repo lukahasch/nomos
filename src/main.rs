@@ -10,12 +10,10 @@
     if_let_guard
 )]
 
-use std::{
-    io::{Write, stdin, stdout},
-    time::SystemTime,
-};
+use std::{ops::Deref, time::SystemTime};
 
-use nomos::{Context, parser::parse};
+use nomos::Context;
+use reedline::{FileBackedHistory, Prompt, PromptEditMode, PromptHistorySearch, Reedline, Signal};
 
 fn setup_logger() -> Result<(), fern::InitError> {
     fern::Dispatch::new()
@@ -35,26 +33,69 @@ fn setup_logger() -> Result<(), fern::InitError> {
     Ok(())
 }
 
+struct ReplPrompt {
+    index: usize,
+}
+
+impl Prompt for ReplPrompt {
+    fn render_prompt_left(&self) -> std::borrow::Cow<'_, str> {
+        format!("repl@{} > ", self.index).into()
+    }
+
+    fn render_prompt_right(&self) -> std::borrow::Cow<'_, str> {
+        "".into()
+    }
+
+    // Optional: how the prompt looks during editing/searching
+    fn render_prompt_indicator(&self, _mode: PromptEditMode) -> std::borrow::Cow<'_, str> {
+        "".into()
+    }
+
+    fn render_prompt_multiline_indicator(&self) -> std::borrow::Cow<'_, str> {
+        "... ".into()
+    }
+
+    fn render_prompt_history_search_indicator(
+        &self,
+        _history_search: PromptHistorySearch,
+    ) -> std::borrow::Cow<'_, str> {
+        ": ".into()
+    }
+}
+
 fn main() {
     setup_logger().expect("Failed to initialize Logger");
-    log::info!("Logger initialized");
-    let mut ctx = Context {
-        variables: Default::default(),
-        sources: Default::default(),
-    };
-    let mut index = 0;
-    loop {
+    log::info!("PROGRAM START");
+
+    let mut ctx = Context::new();
+
+    let mut line_editor = Reedline::create().with_history(Box::new(
+        FileBackedHistory::with_file(100, "repl_history.txt".into())
+            .expect("Failed to create history file"),
+    ));
+    for index in 0.. {
         let source = Box::leak(Box::new(format!("<< repl@{index} >>")));
-        let mut contents = String::new();
-        print!("repl@{index} > ");
-        stdout().flush().unwrap();
-        stdin().read_line(&mut contents).unwrap();
+        let contents = match line_editor.read_line(&ReplPrompt { index }) {
+            Ok(Signal::Success(line)) => line,
+            Ok(Signal::CtrlC) | Ok(Signal::CtrlD) => {
+                println!("Exiting REPL.");
+                break;
+            }
+            Err(err) => {
+                eprintln!("Error reading line: {err}");
+                break;
+            }
+        };
 
         ctx.intern_source(source, &contents);
 
-        match parse(&mut ctx, source) {
+        match ctx.store(source) {
             Ok(ast) => {
-                println!("{}", ctx.show(&*ast));
+                ctx.egraph.rebuild();
+                println!(
+                    "rebuilt: {}",
+                    ctx.show(ctx.egraph.extract(ast, ()).unwrap().deref())
+                )
             }
             Err(e) => {
                 for e in e {
@@ -62,6 +103,5 @@ fn main() {
                 }
             }
         }
-        index += 1;
     }
 }

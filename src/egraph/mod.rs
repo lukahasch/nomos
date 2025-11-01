@@ -35,10 +35,10 @@ impl Egraph {
         }
     }
 
-    pub fn insert(&mut self, term: Spanned<Term<Normalized>>) -> Index {
+    pub fn insert(&mut self, term: Spanned<Term<Normalized>>) -> ClassId {
         let index = self.nodes.insert(term);
-        self.classes.insert(Class { nodes: vec![index] });
-        index
+        let index = self.classes.insert(Class { nodes: vec![index] });
+        ClassId(index)
     }
 
     pub fn store(&mut self, term: Spanned<Term<Normalized>>) -> Id {
@@ -49,27 +49,42 @@ impl Egraph {
         id
     }
 
-    pub fn merge(&mut self) {
+    pub fn log(&self) {
+        log::info!(
+            "Egraph contains {} nodes, and {} classes",
+            self.nodes.len(),
+            self.classes.len()
+        );
+    }
+
+    pub fn rebuild(&mut self) {
+        log::info!("Egraph rebuild");
         let merges = self.collect_merges();
         let combined = self
             .combine_merges(merges)
             .into_iter()
-            .map(|group| {
-                (
-                    group,
-                    ClassId(self.classes.insert(Class { nodes: Vec::new() })),
-                )
+            .map(|mut group| {
+                group.sort_unstable_by(|a, b| {
+                    self.classes
+                        .get(a.0)
+                        .unwrap()
+                        .nodes
+                        .len()
+                        .cmp(&self.classes.get(b.0).unwrap().nodes.len())
+                });
+                (group.pop().unwrap(), group)
             })
             .collect::<Vec<_>>();
+        let empty = combined.is_empty();
         for (_, node) in self.nodes.iter_mut() {
             for (from, to) in combined
                 .iter()
-                .flat_map(|(group, to)| group.iter().zip(std::iter::repeat(to)))
+                .flat_map(|(to, group)| group.iter().zip(std::iter::repeat(to)))
             {
                 node.replace(*from, *to);
             }
         }
-        for (group, new_clas_id) in &combined {
+        for (new_clas_id, group) in &combined {
             for class_id in group {
                 for (_, value) in self.kv.iter_mut() {
                     if *value == *class_id {
@@ -78,12 +93,18 @@ impl Egraph {
                 }
             }
         }
-        for (group, new_class_id) in combined {
+        for (new_class_id, group) in combined {
             let new_nodes = group
                 .into_iter()
                 .flat_map(|class_id| self.classes.remove(class_id.0).unwrap().nodes)
                 .collect::<Vec<_>>();
             self.classes.get_mut(new_class_id.0).unwrap().nodes = new_nodes;
+        }
+        self.log();
+        self.gc();
+        self.log();
+        if !empty {
+            become self.rebuild();
         }
     }
 
@@ -142,14 +163,59 @@ impl Egraph {
         }
         combined
     }
+
+    pub fn gc(&mut self) {
+        log::info!("Egraph GC");
+    }
+
+    pub fn extract_class(
+        &self,
+        class_id: ClassId,
+        eval: impl Evaluator,
+    ) -> Option<&Spanned<Term<Normalized>>> {
+        let class = self.classes.get(class_id.0)?;
+        let best_node = class
+            .nodes
+            .iter()
+            .filter_map(|node_id| self.nodes.get(*node_id))
+            .map(|node| (node, eval.evaluate(self, node)))
+            .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
+            .map(|(node, _)| node)?;
+        Some(best_node)
+    }
+
+    pub fn extract(&self, id: Id, eval: impl Evaluator) -> Option<&Spanned<Term<Normalized>>> {
+        let class_id = self.kv.get(&id)?;
+        self.extract_class(*class_id, eval)
+    }
 }
 
-pub trait Replace {
+pub trait Node {
     fn replace(&mut self, from: ClassId, to: ClassId);
 }
 
-impl Replace for Term<Normalized> {
+impl Node for Term<Normalized> {
     fn replace(&mut self, from: ClassId, to: ClassId) {
-        todo!()
+        match self {
+            Term::List(l) => {
+                for item in l.iter_mut() {
+                    if *item == from {
+                        *item = to;
+                    }
+                }
+            }
+            Term::Integer(_) => {}
+            _ => todo!("{}", self.as_ref()),
+        }
+    }
+}
+
+pub trait Evaluator {
+    fn evaluate(&self, egraph: &Egraph, term: &Spanned<Term<Normalized>>) -> f64;
+}
+
+impl Evaluator for () {
+    fn evaluate(&self, _egraph: &Egraph, _term: &Spanned<Term<Normalized>>) -> f64 {
+        0.0
     }
 }
