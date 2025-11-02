@@ -34,6 +34,7 @@ pub fn atomic_pattern(px: &mut ParseContext) -> Output<Pattern<Parsed>> {
         integer_pattern,
         float_pattern,
         list_pattern,
+        symbol,
     ))
     .spanned()
     .and_then(just(Token::Colon).ignore_and(r#type).optional())
@@ -59,6 +60,13 @@ pub fn underscore_pattern(px: &mut ParseContext) -> Output<Pattern<Parsed>> {
     just(Token::Underscore).map(|_| Pattern::Wildcard).parse(px)
 }
 
+pub fn symbol(px: &mut ParseContext) -> Output<Pattern<Parsed>> {
+    just(Token::Dollar)
+        .ignore_and(identifier)
+        .map(Pattern::Symbol)
+        .parse(px)
+}
+
 pub fn capture_pattern(px: &mut ParseContext) -> Output<Pattern<Parsed>> {
     identifier.map(Pattern::Capture).parse(px)
 }
@@ -69,7 +77,7 @@ pub fn rest_pattern(px: &mut ParseContext) -> Output<Pattern<Parsed>> {
 
 pub fn as_pattern(px: &mut ParseContext) -> Output<Pattern<Parsed>> {
     identifier
-        .and_ignore(just(Token::At))
+        .and_ignore(just(Token::Anpersand))
         .and_then(pattern.spanned())
         .map(|(name, pattern)| Pattern::As {
             pattern: Box::new(pattern),

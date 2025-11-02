@@ -10,6 +10,35 @@ use crate::{
 };
 
 pub fn r#type(px: &mut ParseContext) -> Output<Spanned<Term<Parsed>>> {
+    atomic
+        .repeated1()
+        .map(|types| {
+            types
+                .into_iter()
+                .reduce(|acc, item| {
+                    let span = acc.span.clone() + item.span.clone();
+                    Spanned {
+                        item: Term::Type(Type::Application {
+                            function: Box::new(acc),
+                            argument: Box::new(item),
+                        }),
+                        span,
+                    }
+                })
+                .unwrap()
+        })
+        .parse(px)
+}
+
+pub fn symbol(px: &mut ParseContext) -> Output<Spanned<Term<Parsed>>> {
+    just(Token::Dollar)
+        .ignore_and(identifier)
+        .map(Term::Symbol)
+        .spanned()
+        .parse(px)
+}
+
+pub fn atomic(px: &mut ParseContext) -> Output<Spanned<Term<Parsed>>> {
     Or((function, variable, term_type)).parse(px)
 }
 

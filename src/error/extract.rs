@@ -54,7 +54,8 @@ impl ExtractError for Term<Parsed> {
             | Term::Float(_)
             | Term::Variable(_)
             | Term::Inference(_)
-            | Term::LangItem(_) => false,
+            | Term::LangItem(_)
+            | Term::Symbol(_) => false,
         }
     }
 
@@ -112,7 +113,8 @@ impl ExtractError for Term<Parsed> {
             | Term::Float(_)
             | Term::Variable(_)
             | Term::Inference(_)
-            | Term::LangItem(_) => {}
+            | Term::LangItem(_)
+            | Term::Symbol(_) => {}
         }
     }
 }
@@ -131,7 +133,8 @@ impl ExtractError for Pattern<Parsed> {
             | Pattern::Capture(_)
             | Pattern::Rest
             | Pattern::Integer(_)
-            | Pattern::Float(_) => false,
+            | Pattern::Float(_)
+            | Pattern::Symbol(_) => false,
         }
     }
 
@@ -154,7 +157,8 @@ impl ExtractError for Pattern<Parsed> {
             | Pattern::Capture(_)
             | Pattern::Rest
             | Pattern::Integer(_)
-            | Pattern::Float(_) => {}
+            | Pattern::Float(_)
+            | Pattern::Symbol(_) => {}
         }
     }
 }
@@ -163,6 +167,13 @@ impl ExtractError for Type<Parsed> {
     fn contains_error(&self) -> bool {
         match self {
             Type::Error(_) => true,
+            Type::Function {
+                parameter: argument,
+                result,
+            } => argument.contains_error() || result.contains_error(),
+            Type::Application { function, argument } => {
+                function.contains_error() || argument.contains_error()
+            }
             _ => false,
         }
     }
@@ -176,6 +187,10 @@ impl ExtractError for Type<Parsed> {
             } => {
                 argument.into_inner().collect_errors_into(errors);
                 result.into_inner().collect_errors_into(errors);
+            }
+            Type::Application { function, argument } => {
+                function.into_inner().collect_errors_into(errors);
+                argument.into_inner().collect_errors_into(errors);
             }
             Type::Variable(_) => {}
         }

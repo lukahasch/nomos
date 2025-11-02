@@ -15,15 +15,16 @@
 #![allow(clippy::match_like_matches_macro, clippy::result_large_err)]
 
 use crate::{
-    egraph::{ClassId, Egraph},
     error::Spanned,
-    normalize::Namespace,
+    id::UId,
+    parser::{Parsed, parse},
 };
 pub use crate::{
     error::{Error, Span},
-    id::{Id, id},
+    id::id,
 };
 use ariadne::{Cache, Source};
+use egg::{EGraph, Id};
 use std::{
     collections::HashMap,
     fmt::{Display, Formatter, FormattingOptions},
@@ -31,22 +32,20 @@ use std::{
 };
 use strum::AsRefStr;
 
-pub mod egraph;
 pub mod error;
 pub mod id;
 pub mod impls;
-pub mod normalize;
 pub mod parser;
 
 pub struct Context {
     pub variables: HashMap<Identifier, String>,
     pub sources: HashMap<&'static str, Source>,
-    pub egraph: Egraph,
+    pub egraph: (), /*EGraph<Term<Normalized>, ()>*/
 }
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, Copy)]
 #[repr(transparent)]
-pub struct Identifier(Id);
+pub struct Identifier(UId);
 
 pub trait Types {
     type Identifier;
@@ -60,9 +59,9 @@ pub struct Normalized;
 
 impl Types for Normalized {
     type Identifier = Identifier;
-    type List = Vec<ClassId>;
-    type Block = Vec<ClassId>;
-    type Term = ClassId;
+    type List = Vec<Id>;
+    type Block = Vec<Id>;
+    type Term = Id;
     type Pattern = Arc<Spanned<Pattern<Self>>>;
 }
 
@@ -85,6 +84,7 @@ pub enum Term<T: Types> {
         body: T::Term,
     },
     Variable(T::Identifier),
+    Symbol(T::Identifier),
     Let {
         pattern: T::Pattern,
         value: T::Term,
@@ -118,6 +118,7 @@ pub enum Pattern<T: Types> {
     },
     Wildcard,
     Capture(T::Identifier),
+    Symbol(T::Identifier),
     Rest,
     List(Vec<T::Pattern>),
     As {
@@ -135,7 +136,14 @@ pub enum Pattern<T: Types> {
 pub enum Type<T: Types> {
     Error(Error),
     Variable(T::Identifier),
-    Function { parameter: T::Term, result: T::Term },
+    Function {
+        parameter: T::Term,
+        result: T::Term,
+    },
+    Application {
+        function: T::Term,
+        argument: T::Term,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -167,7 +175,7 @@ impl Context {
         Self {
             variables: HashMap::new(),
             sources: HashMap::new(),
-            egraph: Egraph::new(),
+            egraph: (),
         }
     }
 
@@ -184,16 +192,8 @@ impl Context {
         id
     }
 
-    pub fn store(&mut self, source: &'static str) -> Result<Id, Vec<Error>> {
-        match parser::parse(self, source)?.map(|t| t.normalize(self, &mut Namespace::default())) {
-            Spanned {
-                item: Ok(term),
-                span,
-            } => Ok(self.egraph.store(Spanned { item: term, span })),
-            Spanned {
-                item: Err(errors), ..
-            } => Err(errors),
-        }
+    pub fn parse(&mut self, source: &'static str) -> Result<Spanned<Term<Parsed>>, Vec<Error>> {
+        parse(self, source)
     }
 
     #[allow(clippy::missing_panics_doc)]

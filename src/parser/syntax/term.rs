@@ -42,7 +42,8 @@ pub fn term(px: &mut ParseContext<'_>) -> Output<Spanned<Term<Parsed>>> {
 #[allow(clippy::missing_panics_doc)]
 pub fn atomic_term(px: &mut ParseContext<'_>) -> Output<Spanned<Term<Parsed>>> {
     Or((
-        function, list, tuple, block, integer, float, variable, r#if, r#let, r#match, define,
+        function, list, tuple, block, integer, float, variable, symbol, r#if, r#let, r#match,
+        define,
     ))
     .spanned()
     .repeated1()
@@ -116,6 +117,13 @@ pub fn function(px: &mut ParseContext) -> Output<Term<Parsed>> {
 
 pub fn variable(px: &mut ParseContext) -> Output<Term<Parsed>> {
     identifier.map(Term::Variable).parse(px)
+}
+
+pub fn symbol(px: &mut ParseContext) -> Output<Term<Parsed>> {
+    just(Token::Dollar)
+        .ignore_and(identifier)
+        .map(Term::Symbol)
+        .parse(px)
 }
 
 pub fn r#if(px: &mut ParseContext) -> Output<Term<Parsed>> {

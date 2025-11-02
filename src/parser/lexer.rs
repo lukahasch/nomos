@@ -64,6 +64,10 @@ pub enum Token {
     Plus,
     #[token(":")]
     Colon,
+    #[token("&")]
+    Anpersand,
+    #[token("$")]
+    Dollar,
 }
 
 #[allow(clippy::result_large_err)]
@@ -116,6 +120,8 @@ impl Display for Token {
             Token::Semicolon => write!(f, "';'"),
             Token::Plus => write!(f, "'+'"),
             Token::Colon => write!(f, "':'"),
+            Token::Anpersand => write!(f, "'&'"),
+            Token::Dollar => write!(f, "'$'"),
         }
     }
 }

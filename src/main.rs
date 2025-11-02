@@ -89,13 +89,9 @@ fn main() {
 
         ctx.intern_source(source, &contents);
 
-        match ctx.store(source) {
+        match ctx.parse(source) {
             Ok(ast) => {
-                ctx.egraph.rebuild();
-                println!(
-                    "rebuilt: {}",
-                    ctx.show(ctx.egraph.extract(ast, ()).unwrap().deref())
-                )
+                println!("{}", ctx.show(&ast));
             }
             Err(e) => {
                 for e in e {

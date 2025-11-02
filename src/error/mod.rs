@@ -144,6 +144,10 @@ pub enum Expected {
     Plus,
     #[error("':'")]
     Colon,
+    #[error("'&'")]
+    Anpersand,
+    #[error("'$'")]
+    Dollar,
 }
 
 impl<'a> From<&'a Token> for Expected {
@@ -177,6 +181,8 @@ impl<'a> From<&'a Token> for Expected {
             Token::Semicolon => Expected::Semicolon,
             Token::Plus => Expected::Plus,
             Token::Colon => Expected::Colon,
+            Token::Anpersand => Expected::Anpersand,
+            Token::Dollar => Expected::Dollar,
         }
     }
 }
