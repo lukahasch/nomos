@@ -1,1 +1,24 @@
 switch to using egg
+
+lets write down nomos in EBNF
+
+$(y = @x) -> math #()
+
+
+:fn x -> x
+$(fn x -> x)
+@(x x)
+
+
+what helper functions does my parser need?
+    - just(Token)
+    -
+
+what transformers does my parser need?
+    - and<Mode>(other: Parser)
+    - surrounded_by(open: Token, close: Token)
+    - repeat(mode: RepeatMode)
+    - fatal()
+
+what recoverers does my parser need?
+    -

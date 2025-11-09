@@ -1,0 +1,95 @@
+repl@1 > $(x = 2x a_i)
+$x
+
+repl@2 > print $(a_I2)
+0
+
+repl@3 > $(x = 5 + 3)
+Error: Symbolic Mathematical Conflict '8 = 0' caused by:
+    ...
+
+repl@4 > try $(x = 5 + 3)
+Error(Symbolic Mathematical Conflict '8 = 0')
+
+repl@5 > def $x = $(5 + 3)
+8
+
+type(T) Option = None | Some(T)
+
+def Option::is_some = fn(self) ->
+    match self with
+        | Some(_) -> true,
+        | None -> false,
+
+Result(T, E) = Ok(T) | Error(E)
+
+let try: fn(T) -> Result(T, Error) = #[builtin(try)]
+
+let print: fn(T) -> None = #[builtin(print)]
+
+let id = overload (
+    fn x -> x,
+    fn x: #[pure] i32 -> x + 1,
+    fn x: #[pure] i64 -> x + 2 if ctx.gpu().is_some(),
+)
+
+type Clause(T: Clausable) = struct Clause(T);
+
+type Clausable = trait of
+    ::gpu_compilable: fn() -> bool,
+    .x: bool;
+
+def(T) [T]::map = overload #(
+    fn self: [T], f: fn(T) -> U -> match self with
+        | [] -> [],
+        | [head, ...tail] -> [f(head), ...tail.map(f)],
+    fn self: #[pure] [T] + @{Clause T.size() < 15}, f: @{Clause fn T -> T.gpu_compilable()} + #[pure] fn(T) -> U -> match self with
+        | [] -> [],
+        | [head, ...tail] -> [f(head), ...tail.map(f)],
+)
+
+repl@6 > print id $(x = 10 - 4)
+6
+repl@7 > print id 10
+11
+repl@8 > print id $(x = 10 - 4)
+7
+
+$y = 2 @(id $y)$
+
+print $y
+0
+
+type Particle = struct {
+    position: (f32, f32, f32),
+    velocity: (f32, f32, f32),
+}
+
+def Particle::update = fn self, dt: f32 -> self.with { position: self.position + (self.velocity * dt) }
+
+type State = struct {
+    particles: [Particle],
+}
+
+def State::update = fn self, dt: f32 -> self.with { particles: self.particles.map fn p -> p.update dt }
+
+def main = fn () -> {
+    let state = State {
+        particles: [
+            Particle {
+                position: (0.0, 0.0, 0.0),
+                velocity: (1.0, 0.0, 0.0),
+            },
+            Particle {
+                position: (0.0, 1.0, 0.0),
+                velocity: (0.0, 1.0, 0.0),
+            },
+        ],
+    };
+
+    let dt = 0.016; // Assuming 60 FPS
+
+    let new_state = state.update dt;
+
+    print new_state.particles;
+}

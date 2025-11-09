@@ -14,21 +14,18 @@
 #![warn(clippy::all)]
 #![allow(clippy::match_like_matches_macro, clippy::result_large_err)]
 
+pub use crate::{error::Error, id::id};
 use crate::{
-    error::Spanned,
+    error::{Span, Spanned},
     id::UId,
-    parser::{Parsed, parse},
-};
-pub use crate::{
-    error::{Error, Span},
-    id::id,
 };
 use ariadne::{Cache, Source};
 use egg::{EGraph, Id};
+use ordered_float::OrderedFloat;
+use smallvec::SmallVec;
 use std::{
     collections::HashMap,
-    fmt::{Display, Formatter, FormattingOptions},
-    sync::Arc,
+    fmt::{Formatter, FormattingOptions},
 };
 use strum::AsRefStr;
 
@@ -37,116 +34,57 @@ pub mod id;
 pub mod impls;
 pub mod parser;
 
+#[derive(Debug)]
 pub struct Context {
     pub variables: HashMap<Identifier, String>,
     pub sources: HashMap<&'static str, Source>,
-    pub egraph: (), /*EGraph<Term<Normalized>, ()>*/
+    pub egraph: (), /*EGraph<Node<Term>, ()>*/
 }
 
-#[derive(Debug, Clone, PartialEq, Hash, Eq, Copy)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Hash, Copy)]
 #[repr(transparent)]
 pub struct Identifier(UId);
 
-pub trait Types {
-    type Identifier;
-    type List;
-    type Block;
-    type Term;
-    type Pattern;
+pub const INLINE_CAPACITY: usize = 4;
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Hash)]
+pub struct Node<T: Arrangement> {
+    pub children: SmallVec<[Id; INLINE_CAPACITY]>,
+    pub arrangement: T,
+    pub span: Span,
 }
 
-pub struct Normalized;
+pub trait Arrangement: Sized {
+    fn update_children(&mut self, f: impl FnMut(ChildID) -> ChildID);
 
-impl Types for Normalized {
-    type Identifier = Identifier;
-    type List = Vec<Id>;
-    type Block = Vec<Id>;
-    type Term = Id;
-    type Pattern = Arc<Spanned<Pattern<Self>>>;
+    fn map_children(mut self, f: impl FnMut(ChildID) -> ChildID) -> Self {
+        self.update_children(f);
+        self
+    }
 }
 
-#[derive(AsRefStr)]
-pub enum Term<T: Types> {
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Hash, Copy)]
+#[repr(transparent)]
+pub struct ChildID(u16);
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Hash, AsRefStr)]
+pub enum Term {
     /// An Error has occured, computation will continue until this Error is encountered
     /// and then the error will be bubbled up
     Error(Error),
-    Type(Type<T>),
-    Integer(i64),
-    Float(f64),
-    List(T::List),
-    Block(T::Block),
-    Application {
-        function: T::Term,
-        argument: T::Term,
-    },
-    Function {
-        pattern: T::Pattern,
-        body: T::Term,
-    },
-    Variable(T::Identifier),
-    Symbol(T::Identifier),
-    Let {
-        pattern: T::Pattern,
-        value: T::Term,
-        body: Option<T::Term>,
-    },
-    Define {
-        pattern: T::Pattern,
-        value: T::Term,
-        body: Option<T::Term>,
-    },
-    If {
-        condition: T::Term,
-        then: T::Term,
-        r#else: T::Term,
-    },
-    Match {
-        value: T::Term,
-        branches: Branches<T>,
-    },
-    Inference(usize),
-    LangItem(LangItem),
 }
 
-pub type Branches<T> = Vec<(<T as Types>::Pattern, <T as Types>::Term)>;
-
-pub enum Pattern<T: Types> {
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Hash)]
+pub enum Pattern {
     Error(Error),
-    Typed {
-        pattern: T::Pattern,
-        ty: T::Term,
-    },
-    Wildcard,
-    Capture(T::Identifier),
-    Symbol(T::Identifier),
-    Rest,
-    List(Vec<T::Pattern>),
-    As {
-        pattern: T::Pattern,
-        name: T::Identifier,
-    },
-    If {
-        pattern: T::Pattern,
-        condition: T::Term,
-    },
-    Integer(i64),
-    Float(f64),
 }
 
-pub enum Type<T: Types> {
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Hash)]
+pub enum Type {
     Error(Error),
-    Variable(T::Identifier),
-    Function {
-        parameter: T::Term,
-        result: T::Term,
-    },
-    Application {
-        function: T::Term,
-        argument: T::Term,
-    },
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Hash)]
 pub enum LangItem {
     Add,
 }
@@ -155,12 +93,6 @@ pub trait Show {
     /// # Errors
     /// - On write failure
     fn show(&self, ctx: &Context, fmt: &mut Formatter<'_>) -> std::fmt::Result;
-}
-
-impl Display for Identifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:#x}", self.0.0)
-    }
 }
 
 impl Default for Context {
@@ -192,8 +124,8 @@ impl Context {
         id
     }
 
-    pub fn parse(&mut self, source: &'static str) -> Result<Spanned<Term<Parsed>>, Vec<Error>> {
-        parse(self, source)
+    pub fn parse(&mut self, source: &'static str) -> Result<Spanned<Term>, Vec<Error>> {
+        todo!() //parse(self, source)
     }
 
     #[allow(clippy::missing_panics_doc)]
@@ -233,5 +165,15 @@ impl Cache<&'static str> for Context {
 
     fn display<'a>(&self, id: &'a &'static str) -> Option<impl std::fmt::Display + 'a> {
         Some(id)
+    }
+}
+
+impl<T: Arrangement> Node<T> {
+    pub fn new(children: SmallVec<[Id; INLINE_CAPACITY]>, arrangement: T, span: Span) -> Self {
+        Self {
+            children,
+            arrangement,
+            span,
+        }
     }
 }

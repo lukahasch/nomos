@@ -90,9 +90,7 @@ fn main() {
         ctx.intern_source(source, &contents);
 
         match ctx.parse(source) {
-            Ok(ast) => {
-                println!("{}", ctx.show(&ast));
-            }
+            Ok(ast) => {}
             Err(e) => {
                 for e in e {
                     e.report().print(&mut ctx).unwrap();

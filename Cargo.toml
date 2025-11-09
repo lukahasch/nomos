@@ -13,8 +13,10 @@ iter_tools = "0.39.0"
 log = "0.4.27"
 logos = "0.15.1"
 nucleo-matcher = "0.3.1"
+ordered-float = "5.1.0"
 ratatui = { version = "0.29.0", features = ["all-widgets", "scrolling-regions"] }
 reedline = "0.43.0"
+smallvec = { version = "1.15.1", features = ["arbitrary", "bincode", "const_generics", "const_new", "debugger_visualizer", "drain_filter", "drain_keep_rest", "impl_bincode", "malloc_size_of", "may_dangle", "serde", "specialization", "union", "unty", "write"] }
 strum = { version = "0.27.2", features = ["derive"] }
 thiserror = "2.0.16"
 tui-input = "0.14.0"

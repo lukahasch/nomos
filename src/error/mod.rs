@@ -8,16 +8,40 @@ use std::{
 use thiserror::Error;
 use yansi::{Color, Paint};
 
-pub mod extract;
-
-use crate::parser::{lexer::Token, lib::ParseContext};
+use crate::parser::lexer::Token;
 
 pub const CORRECT: Color = Color::Green;
 pub const INFO: Color = Color::Yellow;
 pub const WARNING: Color = Color::Magenta;
 pub const ERROR: Color = Color::Red;
 
-#[derive(Debug, Error, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+pub struct Span {
+    pub source: &'static str,
+    pub range: Range<usize>,
+}
+
+impl PartialOrd for Span {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        if self.source != other.source {
+            return None;
+        }
+        Some(
+            self.range
+                .start
+                .cmp(&other.range.start)
+                .then_with(|| self.range.end.cmp(&other.range.end)),
+        )
+    }
+}
+
+impl Ord for Span {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap_or(Ordering::Equal)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq, Hash, Default, Error)]
 pub enum Error {
     #[default]
     #[error("{}", rainbow(r"¯\_(ツ)_/¯"))]
@@ -82,7 +106,7 @@ pub fn rainbow(str: &str) -> String {
         .collect()
 }
 
-#[derive(Debug, Error, Clone, PartialEq, Hash, Eq, PartialOrd)]
+#[derive(Debug, Error, Clone, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub enum Expected {
     #[error("integer")]
     Integer,
@@ -187,7 +211,7 @@ impl<'a> From<&'a Token> for Expected {
     }
 }
 
-#[derive(Debug, Error, Clone, PartialEq)]
+#[derive(Debug, Error, Clone, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub enum Found {
     #[error("end of file")]
     Eof,
@@ -195,7 +219,7 @@ pub enum Found {
     Token(Token),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub struct Spanned<T> {
     pub item: T,
     pub span: Span,
@@ -389,7 +413,7 @@ impl Error {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub struct OneOf<T>(pub Vec<T>);
 
 impl<T> Display for OneOf<T>
@@ -481,26 +505,6 @@ impl std::ops::Add for Error {
         } else {
             rhs
         }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Hash, Eq)]
-pub struct Span {
-    pub source: &'static str,
-    pub range: Range<usize>,
-}
-
-impl PartialOrd for Span {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        if self.source != other.source {
-            return None;
-        }
-        Some(
-            self.range
-                .end
-                .cmp(&other.range.end)
-                .then_with(|| self.range.start.cmp(&other.range.start)),
-        )
     }
 }
 

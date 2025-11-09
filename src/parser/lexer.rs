@@ -2,8 +2,9 @@ use std::fmt::Display;
 
 use crate::{Span, error::Error};
 use logos::{Lexer, Logos};
+use ordered_float::OrderedFloat;
 
-#[derive(Logos, Debug, PartialEq, Clone)]
+#[derive(Logos, Debug, PartialEq, Clone, PartialOrd, Ord, Eq, Hash)]
 #[logos(extras = &'static str)]
 #[logos(error(Error, Error::from_lexer))]
 #[logos(skip r"[ \t\n\f]+")]
@@ -11,7 +12,7 @@ pub enum Token {
     #[regex(r"[0-9]+", callback = lex_integer)]
     Integer(i64),
     #[regex(r"[0-9]+\.[0-9]+(e [0-9]+)?", callback = lex_float)]
-    Float(f64),
+    Float(OrderedFloat<f64>),
     #[token("[")]
     OpenBracket,
     #[token("]")]
@@ -78,7 +79,7 @@ fn lex_integer(lex: &Lexer<Token>) -> Result<i64, Error> {
 }
 
 #[allow(clippy::result_large_err)]
-fn lex_float(lex: &Lexer<Token>) -> Result<f64, Error> {
+fn lex_float(lex: &Lexer<Token>) -> Result<OrderedFloat<f64>, Error> {
     lex.slice().parse().map_err(|_| {
         Error::InvalidFloat(lex.slice().to_string(), Span::new(lex.extras, lex.span()))
     })
